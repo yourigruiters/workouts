@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Lock, Mail, ArrowRight } from 'lucide-react-native';
 import { useAuth } from '../src/context/AuthContext';
+import { getFriendlyAuthErrorMessage } from '../src/utils/authErrors';
 
 export default function LandingScreen() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function LandingScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [focusedField, setFocusedField] = useState<'email' | 'password' | null>(null);
 
   const handleAuthSubmit = async () => {
     if (!email.trim() || !password.trim()) {
@@ -40,7 +42,7 @@ export default function LandingScreen() {
       }
       router.replace('/splits');
     } catch (e: any) {
-      setErrorMessage(e.message || 'Authentication error. Please try again.');
+      setErrorMessage(getFriendlyAuthErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -131,16 +133,28 @@ export default function LandingScreen() {
               <Text className="text-slate-700 text-xs font-bold uppercase mb-1.5 ml-1 tracking-wider">
                 Email Address
               </Text>
-              <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-3">
-                <Mail size={18} color="#94A3B8" />
+              <View
+                className={`flex-row items-center rounded-xl px-3.5 h-12 border transition-all ${
+                  focusedField === 'email'
+                    ? 'border-blue-500 bg-white ring-2 ring-blue-100'
+                    : 'border-slate-200 bg-slate-50'
+                }`}
+              >
+                <Mail
+                  size={18}
+                  color={focusedField === 'email' ? '#2563EB' : '#94A3B8'}
+                />
                 <TextInput
                   value={email}
                   onChangeText={setEmail}
+                  onFocus={() => setFocusedField('email')}
+                  onBlur={() => setFocusedField(null)}
                   placeholder="athlete@example.com"
                   placeholderTextColor="#94A3B8"
                   autoCapitalize="none"
                   keyboardType="email-address"
-                  className="flex-1 text-slate-900 ml-2.5 font-medium text-sm"
+                  style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+                  className="flex-1 text-slate-900 ml-2.5 font-medium text-sm h-full"
                 />
               </View>
             </View>
@@ -150,15 +164,27 @@ export default function LandingScreen() {
               <Text className="text-slate-700 text-xs font-bold uppercase mb-1.5 ml-1 tracking-wider">
                 Password
               </Text>
-              <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-3">
-                <Lock size={18} color="#94A3B8" />
+              <View
+                className={`flex-row items-center rounded-xl px-3.5 h-12 border transition-all ${
+                  focusedField === 'password'
+                    ? 'border-blue-500 bg-white ring-2 ring-blue-100'
+                    : 'border-slate-200 bg-slate-50'
+                }`}
+              >
+                <Lock
+                  size={18}
+                  color={focusedField === 'password' ? '#2563EB' : '#94A3B8'}
+                />
                 <TextInput
                   value={password}
                   onChangeText={setPassword}
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField(null)}
                   placeholder="••••••••"
                   placeholderTextColor="#94A3B8"
                   secureTextEntry
-                  className="flex-1 text-slate-900 ml-2.5 font-medium text-sm"
+                  style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+                  className="flex-1 text-slate-900 ml-2.5 font-medium text-sm h-full"
                 />
               </View>
             </View>

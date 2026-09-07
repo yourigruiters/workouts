@@ -14,9 +14,12 @@ import {
   GripVertical,
   Layers,
   Trash2,
+  Edit3,
+  Check,
 } from 'lucide-react-native';
 import { useWorkouts } from '../../src/context/WorkoutContext';
 import { CreateWorkoutModal } from '../../src/components/CreateWorkoutModal';
+import { EditWorkoutModal } from '../../src/components/EditWorkoutModal';
 import { ConfirmDeleteModal } from '../../src/components/ConfirmDeleteModal';
 import { DraggableReorderList } from '../../src/components/DraggableReorderList';
 import { Workout } from '../../src/types/workout';
@@ -28,12 +31,15 @@ export default function SplitDetailScreen() {
     getSplitById,
     getWorkoutsForSplit,
     createWorkout,
-    deleteSplit,
+    updateWorkoutDetails,
+    deleteWorkout,
     reorderWorkouts,
   } = useWorkouts();
 
   const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editTargetWorkout, setEditTargetWorkout] = useState<Workout | null>(null);
+  const [deleteTargetWorkout, setDeleteTargetWorkout] = useState<Workout | null>(null);
 
   const split = getSplitById(id || '');
   const workouts = getWorkoutsForSplit(id || '');
@@ -45,13 +51,6 @@ export default function SplitDetailScreen() {
       pathname: '/workout/[id]',
       params: { id: newWorkout.id },
     });
-  };
-
-  const handleConfirmDeleteSplit = () => {
-    if (!id) return;
-    deleteSplit(id);
-    setConfirmDeleteVisible(false);
-    router.replace('/splits');
   };
 
   if (!split) {
@@ -139,17 +138,45 @@ export default function SplitDetailScreen() {
           </View>
         </View>
 
-        {/* Action Button: Add Workout (On top of content) */}
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => setCreateModalVisible(true)}
-          className="bg-blue-600 py-3.5 px-4 rounded-xl flex-row items-center justify-center mb-5 shadow-sm"
-        >
-          <Plus size={18} color="#FFFFFF" />
-          <Text className="text-white font-bold text-sm ml-2">
-            Add workout
-          </Text>
-        </TouchableOpacity>
+        {/* Action Buttons: Add Workout & Yellow Edit Mode Button */}
+        <View className="flex-row items-center mb-5">
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setCreateModalVisible(true)}
+            className="flex-1 bg-blue-600 py-3.5 px-4 rounded-xl flex-row items-center justify-center shadow-sm mr-2.5"
+          >
+            <Plus size={18} color="#FFFFFF" />
+            <Text className="text-white font-bold text-sm ml-2">
+              Add workout
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setIsEditMode(!isEditMode)}
+            className={`px-4 py-3.5 rounded-xl flex-row items-center justify-center border shadow-sm ${
+              isEditMode
+                ? 'bg-amber-400/30 border-amber-500/60'
+                : 'bg-amber-100/70 border-amber-300/80 hover:bg-amber-200/80'
+            }`}
+          >
+            {isEditMode ? (
+              <>
+                <Check size={16} color="#78350F" />
+                <Text className="text-amber-950 font-black text-sm ml-1.5">
+                  Done
+                </Text>
+              </>
+            ) : (
+              <>
+                <Edit3 size={16} color="#78350F" />
+                <Text className="text-amber-950 font-bold text-sm ml-1.5">
+                  Edit
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
 
         {/* Workouts List Header */}
         <Text className="text-slate-800 text-sm font-bold uppercase tracking-wider mb-3">
@@ -170,7 +197,7 @@ export default function SplitDetailScreen() {
             );
 
             return (
-              <View className="bg-white border border-slate-200 rounded-2xl p-4 mb-3.5 flex-row items-center justify-between shadow-sm">
+              <View className="bg-white border border-slate-200 rounded-2xl p-4 flex-row items-center justify-between shadow-sm">
                 <TouchableOpacity
                   activeOpacity={0.75}
                   onPress={() =>
@@ -215,12 +242,24 @@ export default function SplitDetailScreen() {
                   </View>
                 </TouchableOpacity>
 
-                <View
-                  {...dragHandleProps}
-                  className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 active:bg-blue-50 cursor-grab active:cursor-grabbing"
-                >
-                  <GripVertical size={20} color="#64748B" />
-                </View>
+                {isEditMode && (
+                  <View className="flex-row items-center">
+                    <View
+                      {...dragHandleProps}
+                      className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 active:bg-blue-50 cursor-grab active:cursor-grabbing"
+                    >
+                      <GripVertical size={20} color="#64748B" />
+                    </View>
+
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => setEditTargetWorkout(item)}
+                      className="p-2.5 rounded-xl bg-slate-100 border border-slate-200 ml-2 hover:bg-slate-200"
+                    >
+                      <Edit3 size={18} color="#475569" />
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             );
           }}
@@ -236,20 +275,6 @@ export default function SplitDetailScreen() {
             </View>
           }
         />
-
-        {/* Delete Training Split Button (with confirmation modal) */}
-        <View className="mt-8 pt-6 border-t border-slate-200">
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setConfirmDeleteVisible(true)}
-            className="bg-rose-50 border border-rose-200 py-3.5 rounded-xl flex-row items-center justify-center"
-          >
-            <Trash2 size={16} color="#E11D48" />
-            <Text className="text-rose-600 font-bold text-sm ml-2">
-              Delete training split
-            </Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
 
       {/* 1-Input Create Workout Modal */}
@@ -259,14 +284,37 @@ export default function SplitDetailScreen() {
         onCreate={handleCreateWorkout}
       />
 
-      {/* Confirmation Modal for Delete Split (No quotes) */}
+      {/* Edit Workout Modal (Change name/focus and delete in overlay) */}
+      <EditWorkoutModal
+        visible={Boolean(editTargetWorkout)}
+        workout={editTargetWorkout}
+        onClose={() => setEditTargetWorkout(null)}
+        onSave={(name, focus) => {
+          if (editTargetWorkout) {
+            updateWorkoutDetails(editTargetWorkout.id, name, focus);
+          }
+        }}
+        onDelete={() => {
+          if (editTargetWorkout) {
+            setDeleteTargetWorkout(editTargetWorkout);
+            setEditTargetWorkout(null);
+          }
+        }}
+      />
+
+      {/* Delete Confirmation Modal for Workout */}
       <ConfirmDeleteModal
-        visible={confirmDeleteVisible}
-        title={`Delete ${split.name}?`}
-        message="Are you sure you want to delete this training split? All workouts and exercises inside will be permanently removed."
-        confirmText="Delete Split"
-        onConfirm={handleConfirmDeleteSplit}
-        onCancel={() => setConfirmDeleteVisible(false)}
+        visible={Boolean(deleteTargetWorkout)}
+        title={`Delete ${deleteTargetWorkout?.name || ''}?`}
+        message="Are you sure you want to delete this workout? All exercises and sets inside will be permanently removed."
+        confirmText="Delete Workout"
+        onConfirm={() => {
+          if (deleteTargetWorkout) {
+            deleteWorkout(deleteTargetWorkout.id);
+            setDeleteTargetWorkout(null);
+          }
+        }}
+        onCancel={() => setDeleteTargetWorkout(null)}
       />
     </SafeAreaView>
   );

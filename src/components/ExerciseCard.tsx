@@ -3,10 +3,10 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import {
   Edit3,
   AlertTriangle,
-  Plus,
   ChevronDown,
   ChevronRight,
   GripVertical,
+  Trash2,
 } from 'lucide-react-native';
 import { ExerciseItem, SetItem } from '../types/workout';
 import { MarqueeText } from './MarqueeText';
@@ -14,24 +14,24 @@ import { MarqueeText } from './MarqueeText';
 interface ExerciseCardProps {
   exercise: ExerciseItem;
   onOpenEdit: () => void;
-  onAddSet: (type?: 'warmup' | 'active') => void;
-  onOpenEditSet: (set: SetItem, label: string) => void;
   dragHandleProps?: any;
+  isEditMode?: boolean;
+  onDeleteExercise?: () => void;
 }
 
 export const ExerciseCard: React.FC<ExerciseCardProps> = ({
   exercise,
   onOpenEdit,
-  onAddSet,
-  onOpenEditSet,
   dragHandleProps,
+  isEditMode,
+  onDeleteExercise,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const totalSets = exercise.sets?.length || 0;
 
   return (
-    <View className="bg-white border border-slate-200/80 rounded-2xl p-4 mb-3.5 shadow-sm">
+    <View className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
       {/* Exercise Header Row: Left side toggles open/close, right side has actions */}
       <View className="flex-row items-start justify-between">
         <TouchableOpacity
@@ -72,7 +72,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           </View>
         </TouchableOpacity>
 
-        {/* Top Right Action (Edit & Reorder Handle) */}
+        {/* Top Right Action (Edit, and in Edit Mode: Reorder Handle & Delete) */}
         <View className="flex-row items-center ml-2">
           <TouchableOpacity
             activeOpacity={0.7}
@@ -80,17 +80,34 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               e.stopPropagation?.();
               onOpenEdit();
             }}
-            className="p-2 rounded-xl bg-slate-100 border border-slate-200 mr-1.5 hover:bg-slate-200"
+            className="p-2 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200"
           >
             <Edit3 size={15} color="#475569" />
           </TouchableOpacity>
 
-          <View
-            {...(dragHandleProps || {})}
-            className="p-2 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200 active:bg-blue-50 cursor-grab active:cursor-grabbing"
-          >
-            <GripVertical size={15} color="#475569" />
-          </View>
+          {isEditMode && (
+            <>
+              <View
+                {...(dragHandleProps || {})}
+                className="p-2 rounded-xl bg-slate-100 border border-slate-200 ml-1.5 hover:bg-slate-200 active:bg-blue-50 cursor-grab active:cursor-grabbing"
+              >
+                <GripVertical size={15} color="#64748B" />
+              </View>
+
+              {onDeleteExercise && (
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={(e) => {
+                    e.stopPropagation?.();
+                    onDeleteExercise();
+                  }}
+                  className="p-2 rounded-xl bg-rose-50 border border-rose-200 ml-1.5 hover:bg-rose-100"
+                >
+                  <Trash2 size={15} color="#E11D48" />
+                </TouchableOpacity>
+              )}
+            </>
+          )}
         </View>
       </View>
 
@@ -123,7 +140,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             </View>
           )}
 
-          {/* Sets List Table (SET, REPS, WEIGHT, REST, EDIT) */}
+          {/* Sets List Table (SET, REPS, WEIGHT, REST) */}
           <View className="mt-1">
             <View className="flex-row items-center justify-between pb-2 px-1">
               <Text className="text-slate-400 text-[11px] font-bold uppercase tracking-wider w-24">
@@ -135,16 +152,15 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               <Text className="text-slate-400 text-[11px] font-bold uppercase tracking-wider flex-1 text-right pr-3">
                 WEIGHT
               </Text>
-              <Text className="text-slate-400 text-[11px] font-bold uppercase tracking-wider w-14 text-right pr-2">
+              <Text className="text-slate-400 text-[11px] font-bold uppercase tracking-wider w-16 text-right">
                 REST
               </Text>
-              <Text className="text-slate-400 text-[11px] font-bold uppercase tracking-wider w-8 text-right" />
             </View>
 
             {exercise.sets.length === 0 ? (
               <View className="py-3 px-1 items-center">
                 <Text className="text-slate-400 text-xs font-medium">
-                  No sets added yet. Tap below to add a set.
+                  No sets added yet. Tap the edit icon to configure sets.
                 </Text>
               </View>
             ) : (
@@ -183,76 +199,42 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                         </View>
                       </View>
 
-                    {/* Rep Range (Right Aligned) */}
-                    <View className="flex-1 items-end pr-3">
-                      <Text className="text-slate-700 font-bold text-xs">
-                        {set.repRange || '—'}
-                      </Text>
-                    </View>
+                      {/* Rep Range (Right Aligned) */}
+                      <View className="flex-1 items-end pr-3">
+                        <Text className="text-slate-700 font-bold text-xs">
+                          {set.repRange || '—'}
+                        </Text>
+                      </View>
 
-                    {/* Weight (Smaller kg, Right Aligned) */}
-                    <View className="flex-1 items-end pr-3">
-                      <Text className="text-slate-900 font-bold text-xs">
-                        {set.weightKg !== undefined ? (
-                          <>
-                            {set.weightKg}{' '}
-                            <Text className="text-[10px] font-normal text-slate-400">
-                              kg
+                      {/* Weight (Smaller kg, Right Aligned) */}
+                      <View className="flex-1 items-end pr-3">
+                        <Text className="text-slate-900 font-bold text-xs">
+                          {set.weightKg !== undefined ? (
+                            <>
+                              {set.weightKg}{' '}
+                              <Text className="text-[10px] font-normal text-slate-400">
+                                kg
+                              </Text>
+                            </>
+                          ) : (
+                            <Text className="text-[11px] font-medium text-slate-500">
+                              BW
                             </Text>
-                          </>
-                        ) : (
-                          <Text className="text-[11px] font-medium text-slate-500">
-                            BW
-                          </Text>
-                        )}
-                      </Text>
+                          )}
+                        </Text>
+                      </View>
+
+                      {/* Rest Time (Right Aligned) */}
+                      <View className="w-16 items-end">
+                        <Text className="text-slate-500 font-medium text-xs">
+                          {set.restTime || '1:30'}
+                        </Text>
+                      </View>
                     </View>
-
-                    {/* Rest Time (Right Aligned) */}
-                    <View className="w-14 items-end pr-2">
-                      <Text className="text-slate-500 font-medium text-xs">
-                        {set.restTime || '1:30'}
-                      </Text>
-                    </View>
-
-                    {/* Change / Edit Set Icon */}
-                    <View className="w-8 items-end">
-                      <TouchableOpacity
-                        onPress={() => onOpenEditSet(set, label)}
-                        className="p-1 rounded-lg bg-slate-100"
-                      >
-                        <Edit3 size={13} color="#475569" />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                );
-              });
-            })()
-          )}
-
-            {/* Add Set / Add Warmup Action Row */}
-            <View className="flex-row space-x-2 mt-3">
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => onAddSet('active')}
-                className="flex-1 flex-row items-center justify-center py-2.5 rounded-xl bg-slate-50 border border-slate-200 mr-2"
-              >
-                <Plus size={14} color="#2563EB" />
-                <Text className="text-blue-700 font-bold text-xs ml-1">
-                  Add Set
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => onAddSet('warmup')}
-                className="flex-1 flex-row items-center justify-center py-2.5 rounded-xl bg-amber-50/70 border border-amber-200"
-              >
-                <Text className="text-amber-800 font-bold text-xs">
-                  + Warmup
-                </Text>
-              </TouchableOpacity>
-            </View>
+                  );
+                });
+              })()
+            )}
           </View>
         </View>
       )}

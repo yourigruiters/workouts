@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Switch,
+  Platform,
 } from 'react-native';
 import { X, Plus, AlertTriangle, Layers, Settings2 } from 'lucide-react-native';
 import { ExerciseItem, SectionHeading } from '../types/workout';
@@ -48,7 +49,6 @@ export const AddExerciseModal: React.FC<AddExerciseModalProps> = ({
   const handleSubmit = () => {
     if (!name.trim() || !headingId) return;
 
-    // Start with blank sets as requested
     onAdd({
       name: name.trim(),
       details: details.trim() || undefined,
@@ -56,7 +56,7 @@ export const AddExerciseModal: React.FC<AddExerciseModalProps> = ({
       notes: notes.trim() || undefined,
       isRiskExercise,
       headingId,
-      sets: [], // Blank sets by default
+      sets: [], 
       history: [],
     });
 
@@ -160,7 +160,8 @@ export const AddExerciseModal: React.FC<AddExerciseModalProps> = ({
                 placeholder="e.g. Incline Dumbbell Press, Cable Row"
                 placeholderTextColor="#94A3B8"
                 autoFocus
-                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
+                style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+                className="bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
               />
             </View>
 
@@ -177,7 +178,8 @@ export const AddExerciseModal: React.FC<AddExerciseModalProps> = ({
                 onChangeText={setMachineDetails}
                 placeholder="e.g. Pin #7, Seat #3, Cable stack 2"
                 placeholderTextColor="#94A3B8"
-                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
+                style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+                className="bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
               />
             </View>
 
@@ -191,7 +193,8 @@ export const AddExerciseModal: React.FC<AddExerciseModalProps> = ({
                 onChangeText={setDetails}
                 placeholder="e.g. Right side or Use rope attachment"
                 placeholderTextColor="#94A3B8"
-                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
+                style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+                className="bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
               />
             </View>
 
@@ -210,7 +213,8 @@ export const AddExerciseModal: React.FC<AddExerciseModalProps> = ({
                 numberOfLines={2}
                 placeholder="Important cue or form reminder..."
                 placeholderTextColor="#94A3B8"
-                className="bg-amber-50 border border-amber-300 text-amber-900 rounded-xl px-4 py-2.5 font-medium text-sm"
+                style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+                className="bg-amber-50 border border-amber-300 focus:border-amber-500 text-amber-900 rounded-xl px-4 py-2.5 font-medium text-sm"
               />
             </View>
 

@@ -13,9 +13,11 @@ interface WorkoutContextType {
   splits: TrainingSplit[];
   workouts: Workout[];
   isLoading: boolean;
-  createSplit: (name: string) => Promise<TrainingSplit>;
+  createSplit: (name: string, description?: string) => Promise<TrainingSplit>;
+  updateSplit: (id: string, name: string, description?: string) => Promise<void>;
   deleteSplit: (id: string) => Promise<void>;
   createWorkout: (splitId: string, name: string, focus?: string) => Promise<Workout>;
+  updateWorkoutDetails: (id: string, name: string, focus?: string) => Promise<void>;
   deleteWorkout: (id: string) => Promise<void>;
   updateWorkout: (workout: Workout) => Promise<void>;
   getSplitById: (id: string) => TrainingSplit | undefined;
@@ -105,15 +107,29 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     await storageService.saveWorkouts(newWorkouts);
   };
 
-  const createSplit = async (name: string): Promise<TrainingSplit> => {
+  const createSplit = async (name: string, description?: string): Promise<TrainingSplit> => {
     const newSplit: TrainingSplit = {
       id: 'split-' + Date.now(),
       name: name.trim() || 'New Training Split',
+      description: description?.trim() || undefined,
       createdAt: Date.now(),
     };
     const updated = [newSplit, ...splits];
     await saveSplitsState(updated);
     return newSplit;
+  };
+
+  const updateSplit = async (id: string, name: string, description?: string) => {
+    const updated = splits.map((s) =>
+      s.id === id
+        ? {
+            ...s,
+            name: name.trim() || s.name,
+            description: description?.trim() || undefined,
+          }
+        : s
+    );
+    await saveSplitsState(updated);
   };
 
   const deleteSplit = async (id: string) => {
@@ -142,6 +158,19 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const updated = [...workouts, newWorkout];
     await saveWorkoutsState(updated);
     return newWorkout;
+  };
+
+  const updateWorkoutDetails = async (id: string, name: string, focus?: string) => {
+    const updated = workouts.map((w) =>
+      w.id === id
+        ? {
+            ...w,
+            name: name.trim() || w.name,
+            focus: focus !== undefined ? focus.trim() : w.focus,
+          }
+        : w
+    );
+    await saveWorkoutsState(updated);
   };
 
   const deleteWorkout = async (id: string) => {
@@ -420,8 +449,10 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         workouts,
         isLoading,
         createSplit,
+        updateSplit,
         deleteSplit,
         createWorkout,
+        updateWorkoutDetails,
         deleteWorkout,
         updateWorkout,
         getSplitById,

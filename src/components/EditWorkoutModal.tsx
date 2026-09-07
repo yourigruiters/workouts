@@ -1,26 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Modal, TextInput, TouchableOpacity, Platform } from 'react-native';
-import { X, Plus, Calendar } from 'lucide-react-native';
+import { X, Check, Calendar, Trash2 } from 'lucide-react-native';
+import { Workout } from '../types/workout';
 
-interface CreateWorkoutModalProps {
+interface EditWorkoutModalProps {
   visible: boolean;
+  workout: Workout | null;
   onClose: () => void;
-  onCreate: (name: string, focus?: string) => void;
+  onSave: (name: string, focus?: string) => void;
+  onDelete: () => void;
 }
 
-export const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
+export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({
   visible,
+  workout,
   onClose,
-  onCreate,
+  onSave,
+  onDelete,
 }) => {
   const [name, setName] = useState('');
   const [focus, setFocus] = useState('');
 
-  const handleSubmit = () => {
+  useEffect(() => {
+    if (workout) {
+      setName(workout.name || '');
+      setFocus(workout.focus || '');
+    }
+  }, [workout]);
+
+  if (!workout) return null;
+
+  const handleSave = () => {
     if (!name.trim()) return;
-    onCreate(name.trim(), focus.trim() || undefined);
-    setName('');
-    setFocus('');
+    onSave(name.trim(), focus.trim() || undefined);
     onClose();
   };
 
@@ -40,7 +52,7 @@ export const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
                 <Calendar size={18} color="#2563EB" />
               </View>
               <Text className="text-slate-900 text-lg font-bold">
-                New Workout
+                Edit Workout
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} className="p-1.5 rounded-full bg-slate-100">
@@ -48,8 +60,8 @@ export const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          {/* Name Input */}
-          <View className="mt-4 mb-3">
+          {/* Workout Name Input */}
+          <View className="mt-4 mb-3.5">
             <Text className="text-slate-700 text-xs font-bold uppercase mb-1.5">
               Workout Name *
             </Text>
@@ -58,17 +70,15 @@ export const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
               onChangeText={setName}
               placeholder="e.g. Monday - Push, Leg Day, Pull A"
               placeholderTextColor="#94A3B8"
-              autoFocus
               style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
               className="bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
-              returnKeyType="next"
             />
           </View>
 
-          {/* Focus Input (Optional) */}
+          {/* Focus / Description Input (Optional) */}
           <View className="mb-5">
             <Text className="text-slate-700 text-xs font-bold uppercase mb-1.5">
-              Focus Muscle Groups (Optional)
+              Focus Muscle Groups / Description (Optional)
             </Text>
             <TextInput
               value={focus}
@@ -77,13 +87,13 @@ export const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
               placeholderTextColor="#94A3B8"
               style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
               className="bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 rounded-xl px-4 py-2.5 font-medium text-sm"
-              onSubmitEditing={handleSubmit}
+              onSubmitEditing={handleSave}
               returnKeyType="done"
             />
           </View>
 
           {/* Actions */}
-          <View className="flex-row space-x-3">
+          <View className="flex-row space-x-3 mb-4">
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={onClose}
@@ -94,15 +104,32 @@ export const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
 
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={handleSubmit}
+              onPress={handleSave}
               disabled={!name.trim()}
               className={`flex-1 py-3.5 rounded-xl flex-row items-center justify-center ${
                 name.trim() ? 'bg-blue-600' : 'bg-blue-200'
               }`}
             >
-              <Plus size={16} color="#FFFFFF" />
+              <Check size={16} color="#FFFFFF" />
               <Text className="text-white font-bold text-sm ml-1">
-                Add workout
+                Save Workout
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Delete Workout in overlay */}
+          <View className="pt-3 border-t border-slate-100">
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => {
+                onClose();
+                onDelete();
+              }}
+              className="py-2.5 rounded-xl bg-rose-50 border border-rose-200 flex-row items-center justify-center"
+            >
+              <Trash2 size={15} color="#E11D48" />
+              <Text className="text-rose-600 font-bold text-xs ml-1.5">
+                Delete workout
               </Text>
             </TouchableOpacity>
           </View>

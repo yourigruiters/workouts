@@ -148,11 +148,11 @@ export function DraggableReorderList<T extends { id: string }>({
   };
 
   if (items.length === 0 && ListEmptyComponent) {
-    return <View style={contentContainerStyle}>{ListEmptyComponent}</View>;
+    return <View style={[{ gap: 14 }, contentContainerStyle]}>{ListEmptyComponent}</View>;
   }
 
   return (
-    <View style={contentContainerStyle}>
+    <View style={[{ gap: 14 }, contentContainerStyle]}>
       {items.map((item, index) => {
         const isDragging = draggingId === item.id;
         const panResponder =

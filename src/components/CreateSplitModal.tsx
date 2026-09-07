@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, Modal, TextInput, TouchableOpacity, Platform } from 'react-native';
 import { X, Plus, Dumbbell } from 'lucide-react-native';
 
 interface CreateSplitModalProps {
   visible: boolean;
   onClose: () => void;
-  onCreate: (name: string) => void;
+  onCreate: (name: string, description?: string) => void;
 }
 
 export const CreateSplitModal: React.FC<CreateSplitModalProps> = ({
@@ -14,11 +14,13 @@ export const CreateSplitModal: React.FC<CreateSplitModalProps> = ({
   onCreate,
 }) => {
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
 
   const handleSubmit = () => {
     if (!name.trim()) return;
-    onCreate(name.trim());
+    onCreate(name.trim(), description.trim() || undefined);
     setName('');
+    setDescription('');
     onClose();
   };
 
@@ -46,21 +48,39 @@ export const CreateSplitModal: React.FC<CreateSplitModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <Text className="text-slate-500 text-xs mt-3.5 mb-1.5 font-medium">
-            Enter the name for your new split routine:
-          </Text>
-
           {/* Name Input */}
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="e.g. Push Pull Legs, Upper Lower, Full Body"
-            placeholderTextColor="#94A3B8"
-            autoFocus
-            className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm mb-5"
-            onSubmitEditing={handleSubmit}
-            returnKeyType="done"
-          />
+          <View className="mt-4 mb-3">
+            <Text className="text-slate-700 text-xs font-bold uppercase mb-1.5">
+              Split Name *
+            </Text>
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              placeholder="e.g. Push Pull Legs, Upper Lower, Full Body"
+              placeholderTextColor="#94A3B8"
+              autoFocus
+              style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+              className="bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
+              returnKeyType="next"
+            />
+          </View>
+
+          {/* Description Input (Optional) */}
+          <View className="mb-5">
+            <Text className="text-slate-700 text-xs font-bold uppercase mb-1.5">
+              Description / Notes (Optional)
+            </Text>
+            <TextInput
+              value={description}
+              onChangeText={setDescription}
+              placeholder="e.g. 4-day hypertrophy routine"
+              placeholderTextColor="#94A3B8"
+              style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+              className="bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 rounded-xl px-4 py-2.5 font-medium text-sm"
+              onSubmitEditing={handleSubmit}
+              returnKeyType="done"
+            />
+          </View>
 
           {/* Actions */}
           <View className="flex-row space-x-3">

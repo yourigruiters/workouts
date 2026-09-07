@@ -12,6 +12,8 @@ import {
   Plus,
   Layers,
   Trash2,
+  Edit3,
+  Check,
 } from 'lucide-react-native';
 import { useWorkouts } from '../../src/context/WorkoutContext';
 import { GroupSection } from '../../src/components/GroupSection';
@@ -20,31 +22,31 @@ import { EditExerciseModal } from '../../src/components/EditExerciseModal';
 import { AddExerciseModal } from '../../src/components/AddExerciseModal';
 import { AddHeadingModal } from '../../src/components/AddHeadingModal';
 import { EditGroupModal } from '../../src/components/EditGroupModal';
-import { EditSetModal } from '../../src/components/EditSetModal';
 import { ConfirmDeleteModal } from '../../src/components/ConfirmDeleteModal';
 import { DraggableReorderList } from '../../src/components/DraggableReorderList';
-import { ExerciseItem, SectionHeading, SetItem } from '../../src/types/workout';
+import { ExerciseItem, SectionHeading } from '../../src/types/workout';
 
 export default function WorkoutDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const {
     getWorkoutById,
-    toggleHeadingCollapse,
     addHeading,
     updateHeading,
     deleteHeading,
     addExercise,
     updateExercise,
     deleteExercise,
-    addSet,
-    updateSet,
-    deleteSet,
-    deleteWorkout,
     reorderExercises,
   } = useWorkouts();
 
   const workout = getWorkoutById(id || '');
+
+  // Edit Mode State
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  // Group Collapsed / Expanded State (Always starts completely closed)
+  const [expandedHeadingIds, setExpandedHeadingIds] = useState<Record<string, boolean>>({});
 
   // Modal States
   const [editModalExercise, setEditModalExercise] =
@@ -56,16 +58,9 @@ export default function WorkoutDetailScreen() {
   const [editGroupTarget, setEditGroupTarget] =
     useState<SectionHeading | null>(null);
 
-  // Edit Set Modal State
-  const [editSetTarget, setEditSetTarget] = useState<{
-    exerciseId: string;
-    set: SetItem;
-    label: string;
-  } | null>(null);
-
   // Delete Confirmation States
-  const [confirmDeleteWorkoutVisible, setConfirmDeleteWorkoutVisible] =
-    useState(false);
+  const [deleteTargetExercise, setDeleteTargetExercise] =
+    useState<ExerciseItem | null>(null);
   const [deleteGroupTarget, setDeleteGroupTarget] =
     useState<SectionHeading | null>(null);
 
@@ -93,13 +88,6 @@ export default function WorkoutDetailScreen() {
     (sum, ex) => sum + (ex.sets?.length || 0),
     0
   );
-
-  const handleConfirmDeleteWorkout = () => {
-    if (!workout.id) return;
-    deleteWorkout(workout.id);
-    setConfirmDeleteWorkoutVisible(false);
-    router.back();
-  };
 
   const handleConfirmDeleteGroup = () => {
     if (!deleteGroupTarget) return;
@@ -203,8 +191,8 @@ export default function WorkoutDetailScreen() {
           </View>
         </View>
 
-        {/* 3. Action Buttons (On top of content: Add Exercise & Add group) */}
-        <View className="flex-row space-x-3 mb-5">
+        {/* 3. Action Buttons (Add Exercise, Add group, and Yellow Edit Button) */}
+        <View className="flex-row items-center mb-5">
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={handleAddExerciseClick}
@@ -219,12 +207,38 @@ export default function WorkoutDetailScreen() {
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => setAddGroupVisible(true)}
-            className="bg-white border border-slate-200 px-4 py-3.5 rounded-xl flex-row items-center justify-center shadow-sm"
+            className="bg-white border border-slate-200 px-3.5 py-3.5 rounded-xl flex-row items-center justify-center shadow-sm mr-2"
           >
             <Layers size={17} color="#475569" />
             <Text className="text-slate-700 font-bold text-sm ml-1.5">
               Add group
             </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setIsEditMode(!isEditMode)}
+            className={`px-3.5 py-3.5 rounded-xl flex-row items-center justify-center border shadow-sm ${
+              isEditMode
+                ? 'bg-amber-400/30 border-amber-500/60'
+                : 'bg-amber-100/70 border-amber-300/80 hover:bg-amber-200/80'
+            }`}
+          >
+            {isEditMode ? (
+              <>
+                <Check size={16} color="#78350F" />
+                <Text className="text-amber-950 font-black text-sm ml-1">
+                  Done
+                </Text>
+              </>
+            ) : (
+              <>
+                <Edit3 size={16} color="#78350F" />
+                <Text className="text-amber-950 font-bold text-sm ml-1">
+                  Edit
+                </Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -239,18 +253,9 @@ export default function WorkoutDetailScreen() {
               <ExerciseCard
                 exercise={exercise}
                 dragHandleProps={dragHandleProps}
+                isEditMode={isEditMode}
+                onDeleteExercise={() => setDeleteTargetExercise(exercise)}
                 onOpenEdit={() => setEditModalExercise(exercise)}
-                onAddSet={(type) =>
-                  addSet(workout.id, exercise.id, {
-                    type: type || 'active',
-                    repRange: '8-10',
-                    weightKg: 20,
-                    restTime: '1:30',
-                  })
-                }
-                onOpenEditSet={(set, label) =>
-                  setEditSetTarget({ exerciseId: exercise.id, set, label })
-                }
               />
             )}
           />
@@ -265,17 +270,21 @@ export default function WorkoutDetailScreen() {
             (sum, ex) => sum + (ex.sets?.length || 0),
             0
           );
+          const isCollapsed = !expandedHeadingIds[heading.id];
 
           return (
             <GroupSection
               key={heading.id}
-              heading={heading}
+              heading={{ ...heading, isCollapsed }}
               exerciseCount={sectionExercises.length}
               setCount={sectionSetCount}
               onToggleCollapse={() =>
-                toggleHeadingCollapse(workout.id, heading.id)
+                setExpandedHeadingIds((prev) => ({
+                  ...prev,
+                  [heading.id]: !prev[heading.id],
+                }))
               }
-              onEditGroup={() => setEditGroupTarget(heading)}
+              onEditGroup={isEditMode ? () => setEditGroupTarget(heading) : undefined}
             >
               <DraggableReorderList
                 data={sectionExercises}
@@ -286,18 +295,9 @@ export default function WorkoutDetailScreen() {
                   <ExerciseCard
                     exercise={exercise}
                     dragHandleProps={dragHandleProps}
+                    isEditMode={isEditMode}
+                    onDeleteExercise={() => setDeleteTargetExercise(exercise)}
                     onOpenEdit={() => setEditModalExercise(exercise)}
-                    onAddSet={(type) =>
-                      addSet(workout.id, exercise.id, {
-                        type: type || 'active',
-                        repRange: '8-10',
-                        weightKg: 20,
-                        restTime: '1:30',
-                      })
-                    }
-                    onOpenEditSet={(set, label) =>
-                      setEditSetTarget({ exerciseId: exercise.id, set, label })
-                    }
                   />
                 )}
               />
@@ -326,20 +326,6 @@ export default function WorkoutDetailScreen() {
             </TouchableOpacity>
           </View>
         )}
-
-        {/* 5. Delete Workout Button (at the bottom, no quotes in title) */}
-        <View className="mt-8 pt-6 border-t border-slate-200">
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setConfirmDeleteWorkoutVisible(true)}
-            className="bg-rose-50 border border-rose-200 py-3.5 rounded-xl flex-row items-center justify-center"
-          >
-            <Trash2 size={16} color="#E11D48" />
-            <Text className="text-rose-600 font-bold text-sm ml-2">
-              Delete workout
-            </Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
 
       {/* Edit Exercise Modal */}
@@ -350,6 +336,21 @@ export default function WorkoutDetailScreen() {
         onClose={() => setEditModalExercise(null)}
         onSave={(updated) => updateExercise(workout.id, updated)}
         onDelete={(exId) => deleteExercise(workout.id, exId)}
+      />
+
+      {/* Delete Confirmation Modal for Exercise */}
+      <ConfirmDeleteModal
+        visible={Boolean(deleteTargetExercise)}
+        title={`Delete ${deleteTargetExercise?.name || ''}?`}
+        message="Are you sure you want to delete this exercise? All logged sets will be permanently removed."
+        confirmText="Delete Exercise"
+        onConfirm={() => {
+          if (deleteTargetExercise) {
+            deleteExercise(workout.id, deleteTargetExercise.id);
+            setDeleteTargetExercise(null);
+          }
+        }}
+        onCancel={() => setDeleteTargetExercise(null)}
       />
 
       {/* Add Exercise Modal (Mandatory group requirement) */}
@@ -381,42 +382,15 @@ export default function WorkoutDetailScreen() {
         onDelete={() => {
           if (editGroupTarget) {
             setDeleteGroupTarget(editGroupTarget);
+            setEditGroupTarget(null);
           }
         }}
       />
 
-      {/* Edit Set Modal (Change set type, reps, weight, rest time, or delete set) */}
-      <EditSetModal
-        visible={Boolean(editSetTarget)}
-        set={editSetTarget?.set || null}
-        setLabel={editSetTarget?.label || 'Set'}
-        onClose={() => setEditSetTarget(null)}
-        onSave={(updatedSet) => {
-          if (editSetTarget) {
-            updateSet(workout.id, editSetTarget.exerciseId, updatedSet);
-          }
-        }}
-        onDelete={(setId) => {
-          if (editSetTarget) {
-            deleteSet(workout.id, editSetTarget.exerciseId, setId);
-          }
-        }}
-      />
-
-      {/* Confirmation Modal for Delete Workout (No quotes) */}
-      <ConfirmDeleteModal
-        visible={confirmDeleteWorkoutVisible}
-        title={`Delete ${workout.name}?`}
-        message="Are you sure you want to delete this workout? All groups and exercises inside will be permanently deleted."
-        confirmText="Delete Workout"
-        onConfirm={handleConfirmDeleteWorkout}
-        onCancel={() => setConfirmDeleteWorkoutVisible(false)}
-      />
-
-      {/* Confirmation Modal for Delete Group (No quotes) */}
+      {/* Confirmation Modal for Delete Group */}
       <ConfirmDeleteModal
         visible={Boolean(deleteGroupTarget)}
-        title={`Delete group ${deleteGroupTarget?.title}?`}
+        title={`Delete Group ${deleteGroupTarget?.title || ''}?`}
         message="Are you sure you want to delete this group? All exercises inside this group will be deleted."
         confirmText="Delete Group"
         onConfirm={handleConfirmDeleteGroup}

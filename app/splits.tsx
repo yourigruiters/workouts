@@ -14,21 +14,37 @@ import {
   GripVertical,
   LogOut,
   Layers,
+  Edit3,
+  Check,
+  Trash2,
 } from 'lucide-react-native';
 import { useWorkouts } from '../src/context/WorkoutContext';
 import { useAuth } from '../src/context/AuthContext';
 import { CreateSplitModal } from '../src/components/CreateSplitModal';
+import { EditSplitModal } from '../src/components/EditSplitModal';
+import { ConfirmDeleteModal } from '../src/components/ConfirmDeleteModal';
 import { DraggableReorderList } from '../src/components/DraggableReorderList';
 import { TrainingSplit } from '../src/types/workout';
 
 export default function SplitsScreen() {
   const router = useRouter();
-  const { splits, workouts, isLoading, createSplit, reorderSplits } = useWorkouts();
+  const {
+    splits,
+    workouts,
+    isLoading,
+    createSplit,
+    updateSplit,
+    deleteSplit,
+    reorderSplits,
+  } = useWorkouts();
   const { user, logout } = useAuth();
   const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editTargetSplit, setEditTargetSplit] = useState<TrainingSplit | null>(null);
+  const [deleteTargetSplit, setDeleteTargetSplit] = useState<TrainingSplit | null>(null);
 
-  const handleCreateSplit = async (name: string) => {
-    const newSplit = await createSplit(name);
+  const handleCreateSplit = async (name: string, description?: string) => {
+    const newSplit = await createSplit(name, description);
     router.push({
       pathname: '/split/[id]',
       params: { id: newSplit.id },
@@ -54,7 +70,7 @@ export default function SplitsScreen() {
     );
 
     return (
-      <View className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 flex-row items-center justify-between shadow-sm">
+      <View className="bg-white border border-slate-200 rounded-2xl p-4 flex-row items-center justify-between shadow-sm">
         <TouchableOpacity
           activeOpacity={0.75}
           onPress={() =>
@@ -73,6 +89,11 @@ export default function SplitsScreen() {
             <Text className="text-slate-900 text-base font-bold tracking-tight">
               {item.name}
             </Text>
+            {Boolean(item.description) && (
+              <Text className="text-slate-500 text-xs font-medium mt-0.5" numberOfLines={1}>
+                {item.description}
+              </Text>
+            )}
             <View className="flex-row items-center mt-1 space-x-2">
               <Text className="text-blue-600 text-xs font-semibold">
                 {splitWorkouts.length} {splitWorkouts.length === 1 ? 'Workout' : 'Workouts'}
@@ -85,12 +106,24 @@ export default function SplitsScreen() {
           </View>
         </TouchableOpacity>
 
-        <View
-          {...dragHandleProps}
-          className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 active:bg-blue-50 cursor-grab active:cursor-grabbing"
-        >
-          <GripVertical size={20} color="#64748B" />
-        </View>
+        {isEditMode && (
+          <View className="flex-row items-center">
+            <View
+              {...dragHandleProps}
+              className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 active:bg-blue-50 cursor-grab active:cursor-grabbing"
+            >
+              <GripVertical size={20} color="#64748B" />
+            </View>
+
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => setEditTargetSplit(item)}
+              className="p-2.5 rounded-xl bg-slate-100 border border-slate-200 ml-2 hover:bg-slate-200"
+            >
+              <Edit3 size={18} color="#475569" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     );
   };
@@ -131,15 +164,43 @@ export default function SplitsScreen() {
           </Text>
         </View>
 
-        {/* Action Button: Add split (On top of content) */}
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => setCreateModalVisible(true)}
-          className="bg-blue-600 py-3.5 px-4 rounded-xl flex-row items-center justify-center mb-5 shadow-sm"
-        >
-          <Plus size={18} color="#FFFFFF" />
-          <Text className="text-white font-bold text-sm ml-2">Add split</Text>
-        </TouchableOpacity>
+        {/* Action Buttons: Add split & Yellow Edit Mode Button */}
+        <View className="flex-row items-center mb-5">
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setCreateModalVisible(true)}
+            className="flex-1 bg-blue-600 py-3.5 px-4 rounded-xl flex-row items-center justify-center shadow-sm mr-2.5"
+          >
+            <Plus size={18} color="#FFFFFF" />
+            <Text className="text-white font-bold text-sm ml-2">Add split</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setIsEditMode(!isEditMode)}
+            className={`px-4 py-3.5 rounded-xl flex-row items-center justify-center border shadow-sm ${
+              isEditMode
+                ? 'bg-amber-400/30 border-amber-500/60'
+                : 'bg-amber-100/70 border-amber-300/80 hover:bg-amber-200/80'
+            }`}
+          >
+            {isEditMode ? (
+              <>
+                <Check size={16} color="#78350F" />
+                <Text className="text-amber-950 font-black text-sm ml-1.5">
+                  Done
+                </Text>
+              </>
+            ) : (
+              <>
+                <Edit3 size={16} color="#78350F" />
+                <Text className="text-amber-950 font-bold text-sm ml-1.5">
+                  Edit
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
 
         {/* Splits List */}
         {isLoading ? (
@@ -173,6 +234,39 @@ export default function SplitsScreen() {
         visible={createModalVisible}
         onClose={() => setCreateModalVisible(false)}
         onCreate={handleCreateSplit}
+      />
+
+      {/* Edit Split Modal (Change name/description and delete in overlay) */}
+      <EditSplitModal
+        visible={Boolean(editTargetSplit)}
+        split={editTargetSplit}
+        onClose={() => setEditTargetSplit(null)}
+        onSave={(name, desc) => {
+          if (editTargetSplit) {
+            updateSplit(editTargetSplit.id, name, desc);
+          }
+        }}
+        onDelete={() => {
+          if (editTargetSplit) {
+            setDeleteTargetSplit(editTargetSplit);
+            setEditTargetSplit(null);
+          }
+        }}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        visible={Boolean(deleteTargetSplit)}
+        title={`Delete ${deleteTargetSplit?.name || ''}?`}
+        message="Are you sure you want to delete this training split? All workouts and exercises inside will be permanently removed."
+        confirmText="Delete Split"
+        onConfirm={() => {
+          if (deleteTargetSplit) {
+            deleteSplit(deleteTargetSplit.id);
+            setDeleteTargetSplit(null);
+          }
+        }}
+        onCancel={() => setDeleteTargetSplit(null)}
       />
     </SafeAreaView>
   );
