@@ -1,6 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, Modal, TextInput, TouchableOpacity, Platform } from 'react-native';
-import { X, Plus, Dumbbell } from 'lucide-react-native';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  Modal,
+  TextInput,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
+import { X, Plus, Dumbbell } from "lucide-react-native";
 
 interface CreateSplitModalProps {
   visible: boolean;
@@ -13,14 +20,14 @@ export const CreateSplitModal: React.FC<CreateSplitModalProps> = ({
   onClose,
   onCreate,
 }) => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
 
   const handleSubmit = () => {
     if (!name.trim()) return;
     onCreate(name.trim(), description.trim() || undefined);
-    setName('');
-    setDescription('');
+    setName("");
+    setDescription("");
     onClose();
   };
 
@@ -43,7 +50,10 @@ export const CreateSplitModal: React.FC<CreateSplitModalProps> = ({
                 Add split
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} className="p-1.5 rounded-full bg-slate-100">
+            <TouchableOpacity
+              onPress={onClose}
+              className="p-1.5 rounded-full bg-slate-100"
+            >
               <X size={16} color="#64748B" />
             </TouchableOpacity>
           </View>
@@ -56,10 +66,12 @@ export const CreateSplitModal: React.FC<CreateSplitModalProps> = ({
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder="e.g. Push Pull Legs, Upper Lower, Full Body"
+              placeholder="e.g. Full Body"
               placeholderTextColor="#94A3B8"
               autoFocus
-              style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+              style={
+                Platform.OS === "web" ? ({ outline: "none" } as any) : undefined
+              }
               className="bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
               returnKeyType="next"
             />
@@ -75,7 +87,9 @@ export const CreateSplitModal: React.FC<CreateSplitModalProps> = ({
               onChangeText={setDescription}
               placeholder="e.g. 4-day hypertrophy routine"
               placeholderTextColor="#94A3B8"
-              style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+              style={
+                Platform.OS === "web" ? ({ outline: "none" } as any) : undefined
+              }
               className="bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 rounded-xl px-4 py-2.5 font-medium text-sm"
               onSubmitEditing={handleSubmit}
               returnKeyType="done"
@@ -97,7 +111,7 @@ export const CreateSplitModal: React.FC<CreateSplitModalProps> = ({
               onPress={handleSubmit}
               disabled={!name.trim()}
               className={`flex-1 py-3.5 rounded-xl flex-row items-center justify-center ${
-                name.trim() ? 'bg-blue-600' : 'bg-blue-200'
+                name.trim() ? "bg-blue-600" : "bg-blue-200"
               }`}
             >
               <Plus size={16} color="#FFFFFF" />

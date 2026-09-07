@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Modal, TextInput, TouchableOpacity, Platform } from 'react-native';
-import { X, Check, Dumbbell, Trash2 } from 'lucide-react-native';
-import { TrainingSplit } from '../types/workout';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  Modal,
+  TextInput,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
+import { X, Check, Dumbbell, Trash2 } from "lucide-react-native";
+import { TrainingSplit } from "../types/workout";
 
 interface EditSplitModalProps {
   visible: boolean;
@@ -18,13 +25,13 @@ export const EditSplitModal: React.FC<EditSplitModalProps> = ({
   onSave,
   onDelete,
 }) => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
 
   useEffect(() => {
     if (split) {
-      setName(split.name || '');
-      setDescription(split.description || '');
+      setName(split.name || "");
+      setDescription(split.description || "");
     }
   }, [split]);
 
@@ -55,7 +62,10 @@ export const EditSplitModal: React.FC<EditSplitModalProps> = ({
                 Edit Training Split
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} className="p-1.5 rounded-full bg-slate-100">
+            <TouchableOpacity
+              onPress={onClose}
+              className="p-1.5 rounded-full bg-slate-100"
+            >
               <X size={16} color="#64748B" />
             </TouchableOpacity>
           </View>
@@ -68,9 +78,11 @@ export const EditSplitModal: React.FC<EditSplitModalProps> = ({
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder="e.g. Push Pull Legs, Upper / Lower"
+              placeholder="e.g. Full Body"
               placeholderTextColor="#94A3B8"
-              style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+              style={
+                Platform.OS === "web" ? ({ outline: "none" } as any) : undefined
+              }
               className="bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
             />
           </View>
@@ -85,7 +97,9 @@ export const EditSplitModal: React.FC<EditSplitModalProps> = ({
               onChangeText={setDescription}
               placeholder="e.g. 4-day hypertrophy split"
               placeholderTextColor="#94A3B8"
-              style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+              style={
+                Platform.OS === "web" ? ({ outline: "none" } as any) : undefined
+              }
               className="bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 rounded-xl px-4 py-2.5 font-medium text-sm"
               onSubmitEditing={handleSave}
               returnKeyType="done"
@@ -107,7 +121,7 @@ export const EditSplitModal: React.FC<EditSplitModalProps> = ({
               onPress={handleSave}
               disabled={!name.trim()}
               className={`flex-1 py-3.5 rounded-xl flex-row items-center justify-center ${
-                name.trim() ? 'bg-blue-600' : 'bg-blue-200'
+                name.trim() ? "bg-blue-600" : "bg-blue-200"
               }`}
             >
               <Check size={16} color="#FFFFFF" />

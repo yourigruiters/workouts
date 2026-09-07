@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Switch,
-} from 'react-native';
+} from "react-native";
 import {
   X,
   AlertTriangle,
@@ -18,8 +18,13 @@ import {
   Flame,
   Dumbbell,
   Clock,
-} from 'lucide-react-native';
-import { ExerciseItem, SectionHeading, SetItem, SetType } from '../types/workout';
+} from "lucide-react-native";
+import {
+  ExerciseItem,
+  SectionHeading,
+  SetItem,
+  SetType,
+} from "../types/workout";
 
 interface EditExerciseModalProps {
   visible: boolean;
@@ -38,23 +43,24 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
   onSave,
   onDelete,
 }) => {
-  const [name, setName] = useState('');
-  const [details, setDetails] = useState('');
-  const [machineDetails, setMachineDetails] = useState('');
-  const [notes, setNotes] = useState('');
+  const [name, setName] = useState("");
+  const [details, setDetails] = useState("");
+  const [machineDetails, setMachineDetails] = useState("");
+  const [notes, setNotes] = useState("");
   const [isRiskExercise, setIsRiskExercise] = useState(false);
   const [headingId, setHeadingId] = useState<string | undefined>(undefined);
   const [sets, setSets] = useState<SetItem[]>([]);
 
   useEffect(() => {
     if (exercise) {
-      setName(exercise.name || '');
-      setDetails(exercise.details || '');
-      setMachineDetails(exercise.machineDetails || '');
-      setNotes(exercise.notes || '');
+      setName(exercise.name || "");
+      setDetails(exercise.details || "");
+      setMachineDetails(exercise.machineDetails || "");
+      setNotes(exercise.notes || "");
       setIsRiskExercise(Boolean(exercise.isRiskExercise));
       setHeadingId(
-        exercise.headingId || (headings.length > 0 ? headings[0].id : undefined)
+        exercise.headingId ||
+          (headings.length > 0 ? headings[0].id : undefined),
       );
       setSets(exercise.sets || []);
     }
@@ -64,25 +70,25 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
 
   const handleAddActiveSet = () => {
     const newSet: SetItem = {
-      id: 's-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
-      type: 'active',
-      repRange: '8-10',
+      id: "s-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4),
+      type: "active",
+      repRange: "8-10",
       weightKg: 20,
-      restTime: '1:30',
+      restTime: "1:30",
     };
     setSets((prev) => [...prev, newSet]);
   };
 
   const handleAddWarmupSet = () => {
     const newSet: SetItem = {
-      id: 's-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
-      type: 'warmup',
-      repRange: '12-15',
+      id: "s-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4),
+      type: "warmup",
+      repRange: "12-15",
       weightKg: 10,
-      restTime: '1:00',
+      restTime: "1:00",
     };
-    const warmups = sets.filter((s) => s.type === 'warmup');
-    const actives = sets.filter((s) => s.type !== 'warmup');
+    const warmups = sets.filter((s) => s.type === "warmup");
+    const actives = sets.filter((s) => s.type !== "warmup");
     setSets([...warmups, newSet, ...actives]);
   };
 
@@ -90,11 +96,14 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
     setSets((prev) => {
       const updated = prev.map((s) =>
         s.id === setId
-          ? { ...s, type: (s.type === 'warmup' ? 'active' : 'warmup') as SetType }
-          : s
+          ? {
+              ...s,
+              type: (s.type === "warmup" ? "active" : "warmup") as SetType,
+            }
+          : s,
       );
-      const warmups = updated.filter((s) => s.type === 'warmup');
-      const actives = updated.filter((s) => s.type !== 'warmup');
+      const warmups = updated.filter((s) => s.type === "warmup");
+      const actives = updated.filter((s) => s.type !== "warmup");
       return [...warmups, ...actives];
     });
   };
@@ -102,10 +111,10 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
   const handleUpdateSetField = (
     setId: string,
     field: keyof SetItem,
-    value: any
+    value: any,
   ) => {
     setSets((prev) =>
-      prev.map((s) => (s.id === setId ? { ...s, [field]: value } : s))
+      prev.map((s) => (s.id === setId ? { ...s, [field]: value } : s)),
     );
   };
 
@@ -141,7 +150,9 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
         <View className="bg-white border-t border-slate-200 rounded-t-3xl p-6 max-h-[90%] shadow-2xl">
           {/* Header */}
           <View className="flex-row items-center justify-between pb-3.5 border-b border-slate-100">
-            <Text className="text-slate-900 text-lg font-bold">Edit Exercise</Text>
+            <Text className="text-slate-900 text-lg font-bold">
+              Edit Exercise
+            </Text>
             <TouchableOpacity
               onPress={onClose}
               className="p-1.5 rounded-full bg-slate-100"
@@ -166,13 +177,13 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                         onPress={() => setHeadingId(h.id)}
                         className={`mr-2.5 px-4 py-2 rounded-xl border ${
                           isSelected
-                            ? 'bg-blue-50 border-blue-600 shadow-sm'
-                            : 'bg-slate-50 border-slate-200'
+                            ? "bg-blue-50 border-blue-600 shadow-sm"
+                            : "bg-slate-50 border-slate-200"
                         }`}
                       >
                         <Text
                           className={`text-xs font-bold ${
-                            isSelected ? 'text-blue-700' : 'text-slate-600'
+                            isSelected ? "text-blue-700" : "text-slate-600"
                           }`}
                         >
                           {h.title}
@@ -209,7 +220,7 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
               <TextInput
                 value={machineDetails}
                 onChangeText={setMachineDetails}
-                placeholder="e.g. Pin #7, Seat #3, Cable stack 2"
+                placeholder="e.g. Small bench, stack 3"
                 placeholderTextColor="#94A3B8"
                 className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
               />
@@ -223,7 +234,7 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
               <TextInput
                 value={details}
                 onChangeText={setDetails}
-                placeholder="e.g. Right side or Use rope attachment"
+                placeholder="e.g. Rope attachment"
                 placeholderTextColor="#94A3B8"
                 className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
               />
@@ -265,7 +276,9 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                 activeOpacity={0.8}
                 onPress={() => setIsRiskExercise(!isRiskExercise)}
                 className={`w-12 h-7 rounded-full p-0.5 flex-row items-center ${
-                  isRiskExercise ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'
+                  isRiskExercise
+                    ? "bg-blue-600 justify-end"
+                    : "bg-slate-300 justify-start"
                 }`}
               >
                 <View className="w-6 h-6 rounded-full bg-white shadow-sm" />
@@ -336,7 +349,7 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                     let activeCount = 0;
 
                     return sets.map((s) => {
-                      const isWarmup = s.type === 'warmup';
+                      const isWarmup = s.type === "warmup";
                       if (isWarmup) warmupCount++;
                       else activeCount++;
 
@@ -355,8 +368,8 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                             onPress={() => handleToggleSetType(s.id)}
                             className={`w-24 px-2 py-1.5 rounded-lg flex-row items-center justify-center border ${
                               isWarmup
-                                ? 'bg-amber-100/80 border-amber-300'
-                                : 'bg-blue-50 border-blue-200'
+                                ? "bg-amber-100/80 border-amber-300"
+                                : "bg-blue-50 border-blue-200"
                             }`}
                           >
                             {isWarmup ? (
@@ -366,7 +379,7 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                             )}
                             <Text
                               className={`text-[11px] font-bold ml-1 ${
-                                isWarmup ? 'text-amber-900' : 'text-blue-700'
+                                isWarmup ? "text-amber-900" : "text-blue-700"
                               }`}
                             >
                               {label}
@@ -376,9 +389,9 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                           {/* Reps input */}
                           <View className="flex-1 mx-1">
                             <TextInput
-                              value={s.repRange || ''}
+                              value={s.repRange || ""}
                               onChangeText={(txt) =>
-                                handleUpdateSetField(s.id, 'repRange', txt)
+                                handleUpdateSetField(s.id, "repRange", txt)
                               }
                               placeholder="8-10"
                               placeholderTextColor="#94A3B8"
@@ -390,13 +403,15 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                           <View className="flex-1 mx-1">
                             <TextInput
                               value={
-                                s.weightKg !== undefined ? String(s.weightKg) : ''
+                                s.weightKg !== undefined
+                                  ? String(s.weightKg)
+                                  : ""
                               }
                               onChangeText={(txt) =>
                                 handleUpdateSetField(
                                   s.id,
-                                  'weightKg',
-                                  txt !== '' ? parseFloat(txt) || 0 : undefined
+                                  "weightKg",
+                                  txt !== "" ? parseFloat(txt) || 0 : undefined,
                                 )
                               }
                               placeholder="kg"
@@ -409,9 +424,9 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                           {/* Rest input */}
                           <View className="w-16 mx-1">
                             <TextInput
-                              value={s.restTime || ''}
+                              value={s.restTime || ""}
                               onChangeText={(txt) =>
-                                handleUpdateSetField(s.id, 'restTime', txt)
+                                handleUpdateSetField(s.id, "restTime", txt)
                               }
                               placeholder="1:30"
                               placeholderTextColor="#94A3B8"
@@ -453,7 +468,7 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                 onPress={handleSave}
                 disabled={isSaveDisabled}
                 className={`flex-1 py-3.5 rounded-xl flex-row items-center justify-center shadow-sm ${
-                  !isSaveDisabled ? 'bg-blue-600' : 'bg-blue-200'
+                  !isSaveDisabled ? "bg-blue-600" : "bg-blue-200"
                 }`}
               >
                 <Check size={18} color="#FFFFFF" />

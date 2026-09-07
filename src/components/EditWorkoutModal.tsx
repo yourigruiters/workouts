@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Modal, TextInput, TouchableOpacity, Platform } from 'react-native';
-import { X, Check, Calendar, Trash2 } from 'lucide-react-native';
-import { Workout } from '../types/workout';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  Modal,
+  TextInput,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
+import { X, Check, Calendar, Trash2 } from "lucide-react-native";
+import { Workout } from "../types/workout";
 
 interface EditWorkoutModalProps {
   visible: boolean;
@@ -18,13 +25,13 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({
   onSave,
   onDelete,
 }) => {
-  const [name, setName] = useState('');
-  const [focus, setFocus] = useState('');
+  const [name, setName] = useState("");
+  const [focus, setFocus] = useState("");
 
   useEffect(() => {
     if (workout) {
-      setName(workout.name || '');
-      setFocus(workout.focus || '');
+      setName(workout.name || "");
+      setFocus(workout.focus || "");
     }
   }, [workout]);
 
@@ -55,7 +62,10 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({
                 Edit Workout
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} className="p-1.5 rounded-full bg-slate-100">
+            <TouchableOpacity
+              onPress={onClose}
+              className="p-1.5 rounded-full bg-slate-100"
+            >
               <X size={16} color="#64748B" />
             </TouchableOpacity>
           </View>
@@ -68,9 +78,11 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder="e.g. Monday - Push, Leg Day, Pull A"
+              placeholder="e.g. Monday or Push day"
               placeholderTextColor="#94A3B8"
-              style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+              style={
+                Platform.OS === "web" ? ({ outline: "none" } as any) : undefined
+              }
               className="bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
             />
           </View>
@@ -83,9 +95,11 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({
             <TextInput
               value={focus}
               onChangeText={setFocus}
-              placeholder="e.g. Chest / Triceps / Front Delts"
+              placeholder="e.g. Chest & Triceps"
               placeholderTextColor="#94A3B8"
-              style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+              style={
+                Platform.OS === "web" ? ({ outline: "none" } as any) : undefined
+              }
               className="bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 rounded-xl px-4 py-2.5 font-medium text-sm"
               onSubmitEditing={handleSave}
               returnKeyType="done"
@@ -107,7 +121,7 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({
               onPress={handleSave}
               disabled={!name.trim()}
               className={`flex-1 py-3.5 rounded-xl flex-row items-center justify-center ${
-                name.trim() ? 'bg-blue-600' : 'bg-blue-200'
+                name.trim() ? "bg-blue-600" : "bg-blue-200"
               }`}
             >
               <Check size={16} color="#FFFFFF" />

@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import {
   Plus,
   Dumbbell,
@@ -17,14 +17,14 @@ import {
   Edit3,
   Check,
   Trash2,
-} from 'lucide-react-native';
-import { useWorkouts } from '../src/context/WorkoutContext';
-import { useAuth } from '../src/context/AuthContext';
-import { CreateSplitModal } from '../src/components/CreateSplitModal';
-import { EditSplitModal } from '../src/components/EditSplitModal';
-import { ConfirmDeleteModal } from '../src/components/ConfirmDeleteModal';
-import { DraggableReorderList } from '../src/components/DraggableReorderList';
-import { TrainingSplit } from '../src/types/workout';
+} from "lucide-react-native";
+import { useWorkouts } from "../src/context/WorkoutContext";
+import { useAuth } from "../src/context/AuthContext";
+import { CreateSplitModal } from "../src/components/CreateSplitModal";
+import { EditSplitModal } from "../src/components/EditSplitModal";
+import { ConfirmDeleteModal } from "../src/components/ConfirmDeleteModal";
+import { DraggableReorderList } from "../src/components/DraggableReorderList";
+import { TrainingSplit } from "../src/types/workout";
 
 export default function SplitsScreen() {
   const router = useRouter();
@@ -40,20 +40,23 @@ export default function SplitsScreen() {
   const { user, logout } = useAuth();
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editTargetSplit, setEditTargetSplit] = useState<TrainingSplit | null>(null);
-  const [deleteTargetSplit, setDeleteTargetSplit] = useState<TrainingSplit | null>(null);
+  const [editTargetSplit, setEditTargetSplit] = useState<TrainingSplit | null>(
+    null,
+  );
+  const [deleteTargetSplit, setDeleteTargetSplit] =
+    useState<TrainingSplit | null>(null);
 
   const handleCreateSplit = async (name: string, description?: string) => {
     const newSplit = await createSplit(name, description);
     router.push({
-      pathname: '/split/[id]',
+      pathname: "/split/[id]",
       params: { id: newSplit.id },
     });
   };
 
   const handleLogout = async () => {
     await logout();
-    router.replace('/');
+    router.replace("/");
   };
 
   const renderSplitItem = ({
@@ -66,20 +69,24 @@ export default function SplitsScreen() {
     const splitWorkouts = workouts.filter((w) => w.splitId === item.id);
     const totalExercises = splitWorkouts.reduce(
       (acc, w) => acc + (w.exercises?.length || 0),
-      0
+      0,
     );
 
     return (
       <View className="bg-white border border-slate-200 rounded-2xl p-4 flex-row items-center justify-between shadow-sm">
         <TouchableOpacity
-          activeOpacity={0.75}
-          onPress={() =>
+          disabled={isEditMode}
+          activeOpacity={isEditMode ? 1 : 0.75}
+          onPress={() => {
+            if (isEditMode) return;
             router.push({
-              pathname: '/split/[id]',
+              pathname: "/split/[id]",
               params: { id: item.id },
-            })
-          }
-          className="flex-row items-center flex-1 pr-3"
+            });
+          }}
+          className={`flex-row items-center flex-1 pr-3 ${
+            isEditMode ? "cursor-default" : ""
+          }`}
         >
           <View className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 items-center justify-center mr-4">
             <Dumbbell size={22} color="#2563EB" />
@@ -90,13 +97,17 @@ export default function SplitsScreen() {
               {item.name}
             </Text>
             {Boolean(item.description) && (
-              <Text className="text-slate-500 text-xs font-medium mt-0.5" numberOfLines={1}>
+              <Text
+                className="text-slate-500 text-xs font-medium mt-0.5"
+                numberOfLines={1}
+              >
                 {item.description}
               </Text>
             )}
             <View className="flex-row items-center mt-1 space-x-2">
               <Text className="text-blue-600 text-xs font-semibold">
-                {splitWorkouts.length} {splitWorkouts.length === 1 ? 'Workout' : 'Workouts'}
+                {splitWorkouts.length}{" "}
+                {splitWorkouts.length === 1 ? "Workout" : "Workouts"}
               </Text>
               <Text className="text-slate-300 text-xs">•</Text>
               <Text className="text-slate-500 text-xs font-medium">
@@ -128,7 +139,8 @@ export default function SplitsScreen() {
     );
   };
 
-  const userGreeting = user?.displayName || user?.email?.split('@')[0] || 'Athlete';
+  const userGreeting =
+    user?.displayName || user?.email?.split("@")[0] || "Athlete";
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
@@ -160,7 +172,7 @@ export default function SplitsScreen() {
             Training Splits overview
           </Text>
           <Text className="text-slate-500 text-xs font-medium mt-1">
-            Manage and structure your weekly workout routines
+            Manage and structure your workout routines
           </Text>
         </View>
 
@@ -180,8 +192,8 @@ export default function SplitsScreen() {
             onPress={() => setIsEditMode(!isEditMode)}
             className={`px-4 py-3.5 rounded-xl flex-row items-center justify-center border shadow-sm ${
               isEditMode
-                ? 'bg-amber-400/30 border-amber-500/60'
-                : 'bg-amber-100/70 border-amber-300/80 hover:bg-amber-200/80'
+                ? "bg-amber-400/30 border-amber-500/60"
+                : "bg-amber-100/70 border-amber-300/80 hover:bg-amber-200/80"
             }`}
           >
             {isEditMode ? (
@@ -257,7 +269,7 @@ export default function SplitsScreen() {
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal
         visible={Boolean(deleteTargetSplit)}
-        title={`Delete ${deleteTargetSplit?.name || ''}?`}
+        title={`Delete ${deleteTargetSplit?.name || ""}?`}
         message="Are you sure you want to delete this training split? All workouts and exercises inside will be permanently removed."
         confirmText="Delete Split"
         onConfirm={() => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,38 +9,40 @@ import {
   Platform,
   ActivityIndicator,
   Image,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Lock, Mail, ArrowRight } from 'lucide-react-native';
-import { useAuth } from '../src/context/AuthContext';
-import { getFriendlyAuthErrorMessage } from '../src/utils/authErrors';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { Lock, Mail, ArrowRight } from "lucide-react-native";
+import { useAuth } from "../src/context/AuthContext";
+import { getFriendlyAuthErrorMessage } from "../src/utils/authErrors";
 
 export default function LandingScreen() {
   const router = useRouter();
   const { loginWithEmail, registerWithEmail } = useAuth();
 
-  const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [focusedField, setFocusedField] = useState<'email' | 'password' | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [focusedField, setFocusedField] = useState<"email" | "password" | null>(
+    null,
+  );
 
   const handleAuthSubmit = async () => {
     if (!email.trim() || !password.trim()) {
-      setErrorMessage('Please enter both email and password.');
+      setErrorMessage("Please enter both email and password.");
       return;
     }
-    setErrorMessage('');
+    setErrorMessage("");
     setLoading(true);
     try {
-      if (mode === 'login') {
+      if (mode === "login") {
         await loginWithEmail(email.trim(), password);
       } else {
         await registerWithEmail(email.trim(), password);
       }
-      router.replace('/splits');
+      router.replace("/splits");
     } catch (e: any) {
       setErrorMessage(getFriendlyAuthErrorMessage(e));
     } finally {
@@ -51,11 +53,11 @@ export default function LandingScreen() {
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
           className="px-6 py-8"
           showsVerticalScrollIndicator={false}
         >
@@ -63,8 +65,8 @@ export default function LandingScreen() {
           <View className="items-center mb-8">
             <View className="w-24 h-24 rounded-3xl bg-white border border-slate-200 items-center justify-center mb-4 shadow-sm overflow-hidden p-2">
               <Image
-                source={require('../assets/app-logo.png')}
-                style={{ width: '100%', height: '100%' }}
+                source={require("../assets/app-logo.png")}
+                style={{ width: "100%", height: "100%" }}
                 resizeMode="contain"
               />
             </View>
@@ -72,7 +74,7 @@ export default function LandingScreen() {
               WORKOUTS
             </Text>
             <Text className="text-slate-500 text-sm font-medium mt-1">
-              Precision Splits & Routine Planner
+              Splits & Workouts planner
             </Text>
           </View>
 
@@ -83,16 +85,16 @@ export default function LandingScreen() {
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => {
-                  setMode('login');
-                  setErrorMessage('');
+                  setMode("login");
+                  setErrorMessage("");
                 }}
                 className={`flex-1 py-2.5 rounded-xl items-center ${
-                  mode === 'login' ? 'bg-white shadow-sm' : 'bg-transparent'
+                  mode === "login" ? "bg-white shadow-sm" : "bg-transparent"
                 }`}
               >
                 <Text
                   className={`font-bold text-sm ${
-                    mode === 'login' ? 'text-slate-900' : 'text-slate-500'
+                    mode === "login" ? "text-slate-900" : "text-slate-500"
                   }`}
                 >
                   Log In
@@ -102,16 +104,16 @@ export default function LandingScreen() {
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => {
-                  setMode('register');
-                  setErrorMessage('');
+                  setMode("register");
+                  setErrorMessage("");
                 }}
                 className={`flex-1 py-2.5 rounded-xl items-center ${
-                  mode === 'register' ? 'bg-white shadow-sm' : 'bg-transparent'
+                  mode === "register" ? "bg-white shadow-sm" : "bg-transparent"
                 }`}
               >
                 <Text
                   className={`font-bold text-sm ${
-                    mode === 'register' ? 'text-slate-900' : 'text-slate-500'
+                    mode === "register" ? "text-slate-900" : "text-slate-500"
                   }`}
                 >
                   Register
@@ -135,25 +137,29 @@ export default function LandingScreen() {
               </Text>
               <View
                 className={`flex-row items-center rounded-xl px-3.5 h-12 border transition-all ${
-                  focusedField === 'email'
-                    ? 'border-blue-500 bg-white ring-2 ring-blue-100'
-                    : 'border-slate-200 bg-slate-50'
+                  focusedField === "email"
+                    ? "border-blue-500 bg-white ring-2 ring-blue-100"
+                    : "border-slate-200 bg-slate-50"
                 }`}
               >
                 <Mail
                   size={18}
-                  color={focusedField === 'email' ? '#2563EB' : '#94A3B8'}
+                  color={focusedField === "email" ? "#2563EB" : "#94A3B8"}
                 />
                 <TextInput
                   value={email}
                   onChangeText={setEmail}
-                  onFocus={() => setFocusedField('email')}
+                  onFocus={() => setFocusedField("email")}
                   onBlur={() => setFocusedField(null)}
                   placeholder="athlete@example.com"
                   placeholderTextColor="#94A3B8"
                   autoCapitalize="none"
                   keyboardType="email-address"
-                  style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+                  style={
+                    Platform.OS === "web"
+                      ? ({ outline: "none" } as any)
+                      : undefined
+                  }
                   className="flex-1 text-slate-900 ml-2.5 font-medium text-sm h-full"
                 />
               </View>
@@ -166,24 +172,28 @@ export default function LandingScreen() {
               </Text>
               <View
                 className={`flex-row items-center rounded-xl px-3.5 h-12 border transition-all ${
-                  focusedField === 'password'
-                    ? 'border-blue-500 bg-white ring-2 ring-blue-100'
-                    : 'border-slate-200 bg-slate-50'
+                  focusedField === "password"
+                    ? "border-blue-500 bg-white ring-2 ring-blue-100"
+                    : "border-slate-200 bg-slate-50"
                 }`}
               >
                 <Lock
                   size={18}
-                  color={focusedField === 'password' ? '#2563EB' : '#94A3B8'}
+                  color={focusedField === "password" ? "#2563EB" : "#94A3B8"}
                 />
                 <TextInput
                   value={password}
                   onChangeText={setPassword}
-                  onFocus={() => setFocusedField('password')}
+                  onFocus={() => setFocusedField("password")}
                   onBlur={() => setFocusedField(null)}
                   placeholder="••••••••"
                   placeholderTextColor="#94A3B8"
                   secureTextEntry
-                  style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+                  style={
+                    Platform.OS === "web"
+                      ? ({ outline: "none" } as any)
+                      : undefined
+                  }
                   className="flex-1 text-slate-900 ml-2.5 font-medium text-sm h-full"
                 />
               </View>
@@ -201,7 +211,7 @@ export default function LandingScreen() {
               ) : (
                 <>
                   <Text className="text-white font-bold text-base mr-2">
-                    {mode === 'login' ? 'Sign In' : 'Create Account'}
+                    {mode === "login" ? "Sign In" : "Create Account"}
                   </Text>
                   <ArrowRight size={18} color="#FFFFFF" />
                 </>

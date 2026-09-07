@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity } from "react-native";
 import {
   Edit3,
   AlertTriangle,
@@ -7,9 +7,9 @@ import {
   ChevronRight,
   GripVertical,
   Trash2,
-} from 'lucide-react-native';
-import { ExerciseItem, SetItem } from '../types/workout';
-import { MarqueeText } from './MarqueeText';
+} from "lucide-react-native";
+import { ExerciseItem, SetItem } from "../types/workout";
+import { MarqueeText } from "./MarqueeText";
 
 interface ExerciseCardProps {
   exercise: ExerciseItem;
@@ -57,7 +57,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               {!isExpanded && (
                 <View className="bg-slate-100 px-2 py-0.5 rounded-full my-0.5">
                   <Text className="text-slate-600 text-[11px] font-bold">
-                    {totalSets} {totalSets === 1 ? 'set' : 'sets'}
+                    {totalSets} {totalSets === 1 ? "set" : "sets"}
                   </Text>
                 </View>
               )}
@@ -165,12 +165,16 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               </View>
             ) : (
               (() => {
-                const warmups = (exercise.sets || []).filter((s) => s.type === 'warmup');
-                const actives = (exercise.sets || []).filter((s) => s.type !== 'warmup');
+                const warmups = (exercise.sets || []).filter(
+                  (s) => s.type === "warmup",
+                );
+                const actives = (exercise.sets || []).filter(
+                  (s) => s.type !== "warmup",
+                );
                 const orderedSets = [...warmups, ...actives];
 
                 return orderedSets.map((set, index) => {
-                  const isWarmup = set.type === 'warmup';
+                  const isWarmup = set.type === "warmup";
                   const label = isWarmup
                     ? `Warmup ${index + 1}`
                     : `Set ${index - warmups.length + 1}`;
@@ -185,13 +189,13 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                         <View
                           className={`px-2 py-0.5 rounded-md ${
                             isWarmup
-                              ? 'bg-amber-100 border border-amber-300'
-                              : 'bg-blue-50 border border-blue-200'
+                              ? "bg-amber-100 border border-amber-300"
+                              : "bg-blue-50 border border-blue-200"
                           }`}
                         >
                           <Text
                             className={`text-[11px] font-bold ${
-                              isWarmup ? 'text-amber-800' : 'text-blue-700'
+                              isWarmup ? "text-amber-800" : "text-blue-700"
                             }`}
                           >
                             {label}
@@ -202,7 +206,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                       {/* Rep Range (Right Aligned) */}
                       <View className="flex-1 items-end pr-3">
                         <Text className="text-slate-700 font-bold text-xs">
-                          {set.repRange || '—'}
+                          {set.repRange || "—"}
                         </Text>
                       </View>
 
@@ -211,14 +215,14 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                         <Text className="text-slate-900 font-bold text-xs">
                           {set.weightKg !== undefined ? (
                             <>
-                              {set.weightKg}{' '}
+                              {set.weightKg}{" "}
                               <Text className="text-[10px] font-normal text-slate-400">
                                 kg
                               </Text>
                             </>
                           ) : (
                             <Text className="text-[11px] font-medium text-slate-500">
-                              BW
+                              —
                             </Text>
                           )}
                         </Text>
@@ -227,7 +231,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                       {/* Rest Time (Right Aligned) */}
                       <View className="w-16 items-end">
                         <Text className="text-slate-500 font-medium text-xs">
-                          {set.restTime || '1:30'}
+                          {set.restTime || "—"}
                         </Text>
                       </View>
                     </View>

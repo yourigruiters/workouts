@@ -1,6 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, Modal, TextInput, TouchableOpacity, Platform } from 'react-native';
-import { X, Plus, Calendar } from 'lucide-react-native';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  Modal,
+  TextInput,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
+import { X, Plus, Calendar } from "lucide-react-native";
 
 interface CreateWorkoutModalProps {
   visible: boolean;
@@ -13,14 +20,14 @@ export const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
   onClose,
   onCreate,
 }) => {
-  const [name, setName] = useState('');
-  const [focus, setFocus] = useState('');
+  const [name, setName] = useState("");
+  const [focus, setFocus] = useState("");
 
   const handleSubmit = () => {
     if (!name.trim()) return;
     onCreate(name.trim(), focus.trim() || undefined);
-    setName('');
-    setFocus('');
+    setName("");
+    setFocus("");
     onClose();
   };
 
@@ -43,7 +50,10 @@ export const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
                 New Workout
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} className="p-1.5 rounded-full bg-slate-100">
+            <TouchableOpacity
+              onPress={onClose}
+              className="p-1.5 rounded-full bg-slate-100"
+            >
               <X size={16} color="#64748B" />
             </TouchableOpacity>
           </View>
@@ -56,10 +66,12 @@ export const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder="e.g. Monday - Push, Leg Day, Pull A"
+              placeholder="e.g. Monday or Push day"
               placeholderTextColor="#94A3B8"
               autoFocus
-              style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+              style={
+                Platform.OS === "web" ? ({ outline: "none" } as any) : undefined
+              }
               className="bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
               returnKeyType="next"
             />
@@ -73,9 +85,11 @@ export const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
             <TextInput
               value={focus}
               onChangeText={setFocus}
-              placeholder="e.g. Chest / Triceps / Front Delts"
+              placeholder="e.g. Chest & Triceps"
               placeholderTextColor="#94A3B8"
-              style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
+              style={
+                Platform.OS === "web" ? ({ outline: "none" } as any) : undefined
+              }
               className="bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 rounded-xl px-4 py-2.5 font-medium text-sm"
               onSubmitEditing={handleSubmit}
               returnKeyType="done"
@@ -97,7 +111,7 @@ export const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
               onPress={handleSubmit}
               disabled={!name.trim()}
               className={`flex-1 py-3.5 rounded-xl flex-row items-center justify-center ${
-                name.trim() ? 'bg-blue-600' : 'bg-blue-200'
+                name.trim() ? "bg-blue-600" : "bg-blue-200"
               }`}
             >
               <Plus size={16} color="#FFFFFF" />

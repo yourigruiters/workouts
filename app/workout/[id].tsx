@@ -1,12 +1,7 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowLeft,
   Plus,
@@ -14,17 +9,17 @@ import {
   Trash2,
   Edit3,
   Check,
-} from 'lucide-react-native';
-import { useWorkouts } from '../../src/context/WorkoutContext';
-import { GroupSection } from '../../src/components/GroupSection';
-import { ExerciseCard } from '../../src/components/ExerciseCard';
-import { EditExerciseModal } from '../../src/components/EditExerciseModal';
-import { AddExerciseModal } from '../../src/components/AddExerciseModal';
-import { AddHeadingModal } from '../../src/components/AddHeadingModal';
-import { EditGroupModal } from '../../src/components/EditGroupModal';
-import { ConfirmDeleteModal } from '../../src/components/ConfirmDeleteModal';
-import { DraggableReorderList } from '../../src/components/DraggableReorderList';
-import { ExerciseItem, SectionHeading } from '../../src/types/workout';
+} from "lucide-react-native";
+import { useWorkouts } from "../../src/context/WorkoutContext";
+import { GroupSection } from "../../src/components/GroupSection";
+import { ExerciseCard } from "../../src/components/ExerciseCard";
+import { EditExerciseModal } from "../../src/components/EditExerciseModal";
+import { AddExerciseModal } from "../../src/components/AddExerciseModal";
+import { AddHeadingModal } from "../../src/components/AddHeadingModal";
+import { EditGroupModal } from "../../src/components/EditGroupModal";
+import { ConfirmDeleteModal } from "../../src/components/ConfirmDeleteModal";
+import { DraggableReorderList } from "../../src/components/DraggableReorderList";
+import { ExerciseItem, SectionHeading } from "../../src/types/workout";
 
 export default function WorkoutDetailScreen() {
   const router = useRouter();
@@ -40,13 +35,15 @@ export default function WorkoutDetailScreen() {
     reorderExercises,
   } = useWorkouts();
 
-  const workout = getWorkoutById(id || '');
+  const workout = getWorkoutById(id || "");
 
   // Edit Mode State
   const [isEditMode, setIsEditMode] = useState(false);
 
   // Group Collapsed / Expanded State (Always starts completely closed)
-  const [expandedHeadingIds, setExpandedHeadingIds] = useState<Record<string, boolean>>({});
+  const [expandedHeadingIds, setExpandedHeadingIds] = useState<
+    Record<string, boolean>
+  >({});
 
   // Modal States
   const [editModalExercise, setEditModalExercise] =
@@ -55,8 +52,9 @@ export default function WorkoutDetailScreen() {
   const [addGroupVisible, setAddGroupVisible] = useState(false);
 
   // Edit Group Modal State
-  const [editGroupTarget, setEditGroupTarget] =
-    useState<SectionHeading | null>(null);
+  const [editGroupTarget, setEditGroupTarget] = useState<SectionHeading | null>(
+    null,
+  );
 
   // Delete Confirmation States
   const [deleteTargetExercise, setDeleteTargetExercise] =
@@ -86,7 +84,7 @@ export default function WorkoutDetailScreen() {
   const totalExercises = workout.exercises?.length || 0;
   const totalSets = (workout.exercises || []).reduce(
     (sum, ex) => sum + (ex.sets?.length || 0),
-    0
+    0,
   );
 
   const handleConfirmDeleteGroup = () => {
@@ -104,11 +102,13 @@ export default function WorkoutDetailScreen() {
   };
 
   // Fallback top level exercises
-  const topLevelExercises = (workout.exercises || []).filter((ex) => !ex.headingId);
+  const topLevelExercises = (workout.exercises || []).filter(
+    (ex) => !ex.headingId,
+  );
 
   const handleReorderGroupExercises = (
     headingId: string,
-    reorderedGroupExercises: ExerciseItem[]
+    reorderedGroupExercises: ExerciseItem[],
   ) => {
     if (!workout) return;
     let groupIdx = 0;
@@ -123,7 +123,9 @@ export default function WorkoutDetailScreen() {
     reorderExercises(workout.id, newExercises);
   };
 
-  const handleReorderTopLevelExercises = (reorderedTopLevel: ExerciseItem[]) => {
+  const handleReorderTopLevelExercises = (
+    reorderedTopLevel: ExerciseItem[],
+  ) => {
     if (!workout) return;
     let topIdx = 0;
     const newExercises = (workout.exercises || []).map((ex) => {
@@ -220,8 +222,8 @@ export default function WorkoutDetailScreen() {
             onPress={() => setIsEditMode(!isEditMode)}
             className={`px-3.5 py-3.5 rounded-xl flex-row items-center justify-center border shadow-sm ${
               isEditMode
-                ? 'bg-amber-400/30 border-amber-500/60'
-                : 'bg-amber-100/70 border-amber-300/80 hover:bg-amber-200/80'
+                ? "bg-amber-400/30 border-amber-500/60"
+                : "bg-amber-100/70 border-amber-300/80 hover:bg-amber-200/80"
             }`}
           >
             {isEditMode ? (
@@ -264,11 +266,11 @@ export default function WorkoutDetailScreen() {
         {/* Categorized Groups with Nested Exercise Cards */}
         {headings.map((heading) => {
           const sectionExercises = (workout.exercises || []).filter(
-            (ex) => ex.headingId === heading.id
+            (ex) => ex.headingId === heading.id,
           );
           const sectionSetCount = sectionExercises.reduce(
             (sum, ex) => sum + (ex.sets?.length || 0),
-            0
+            0,
           );
           const isCollapsed = !expandedHeadingIds[heading.id];
 
@@ -284,7 +286,9 @@ export default function WorkoutDetailScreen() {
                   [heading.id]: !prev[heading.id],
                 }))
               }
-              onEditGroup={isEditMode ? () => setEditGroupTarget(heading) : undefined}
+              onEditGroup={
+                isEditMode ? () => setEditGroupTarget(heading) : undefined
+              }
             >
               <DraggableReorderList
                 data={sectionExercises}
@@ -313,7 +317,8 @@ export default function WorkoutDetailScreen() {
               No Groups Created Yet
             </Text>
             <Text className="text-slate-400 text-xs text-center mt-1 mb-4">
-              Create your first group (e.g. Chest, Triceps, Warmup) before adding exercises.
+              Create your first group (e.g. Chest or Triceps) before adding
+              exercises.
             </Text>
             <TouchableOpacity
               onPress={() => setAddGroupVisible(true)}
@@ -341,7 +346,7 @@ export default function WorkoutDetailScreen() {
       {/* Delete Confirmation Modal for Exercise */}
       <ConfirmDeleteModal
         visible={Boolean(deleteTargetExercise)}
-        title={`Delete ${deleteTargetExercise?.name || ''}?`}
+        title={`Delete ${deleteTargetExercise?.name || ""}?`}
         message="Are you sure you want to delete this exercise? All logged sets will be permanently removed."
         confirmText="Delete Exercise"
         onConfirm={() => {
@@ -390,7 +395,7 @@ export default function WorkoutDetailScreen() {
       {/* Confirmation Modal for Delete Group */}
       <ConfirmDeleteModal
         visible={Boolean(deleteGroupTarget)}
-        title={`Delete Group ${deleteGroupTarget?.title || ''}?`}
+        title={`Delete Group ${deleteGroupTarget?.title || ""}?`}
         message="Are you sure you want to delete this group? All exercises inside this group will be deleted."
         confirmText="Delete Group"
         onConfirm={handleConfirmDeleteGroup}

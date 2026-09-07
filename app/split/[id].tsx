@@ -199,14 +199,18 @@ export default function SplitDetailScreen() {
             return (
               <View className="bg-white border border-slate-200 rounded-2xl p-4 flex-row items-center justify-between shadow-sm">
                 <TouchableOpacity
-                  activeOpacity={0.75}
-                  onPress={() =>
+                  disabled={isEditMode}
+                  activeOpacity={isEditMode ? 1 : 0.75}
+                  onPress={() => {
+                    if (isEditMode) return;
                     router.push({
                       pathname: '/workout/[id]',
                       params: { id: item.id },
-                    })
-                  }
-                  className="flex-row items-center flex-1 pr-3"
+                    });
+                  }}
+                  className={`flex-row items-center flex-1 pr-3 ${
+                    isEditMode ? 'cursor-default' : ''
+                  }`}
                 >
                   <View className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 items-center justify-center mr-3.5">
                     <Calendar size={20} color="#2563EB" />

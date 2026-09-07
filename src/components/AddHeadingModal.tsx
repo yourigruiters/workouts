@@ -1,22 +1,26 @@
-import React, { useState } from 'react';
-import { View, Text, Modal, TextInput, TouchableOpacity } from 'react-native';
-import { X, Plus, Layers, Check } from 'lucide-react-native';
-import { SectionHeading } from '../types/workout';
+import React, { useState } from "react";
+import { View, Text, Modal, TextInput, TouchableOpacity } from "react-native";
+import { X, Plus, Layers, Check } from "lucide-react-native";
+import { SectionHeading } from "../types/workout";
 
 interface AddHeadingModalProps {
   visible: boolean;
   onClose: () => void;
-  onAdd: (title: string, color: SectionHeading['color']) => void;
+  onAdd: (title: string, color: SectionHeading["color"]) => void;
 }
 
 // 6 Clean colors fitting on a single horizontal row
-const AVAILABLE_COLORS: { id: SectionHeading['color']; name: string; bgClass: string }[] = [
-  { id: 'blue', name: 'Blue', bgClass: 'bg-blue-500' },
-  { id: 'emerald', name: 'Emerald', bgClass: 'bg-emerald-500' },
-  { id: 'amber', name: 'Amber', bgClass: 'bg-amber-500' },
-  { id: 'rose', name: 'Rose', bgClass: 'bg-rose-500' },
-  { id: 'cyan', name: 'Cyan', bgClass: 'bg-cyan-500' },
-  { id: 'zinc', name: 'Slate', bgClass: 'bg-slate-500' },
+const AVAILABLE_COLORS: {
+  id: SectionHeading["color"];
+  name: string;
+  bgClass: string;
+}[] = [
+  { id: "blue", name: "Blue", bgClass: "bg-blue-500" },
+  { id: "emerald", name: "Emerald", bgClass: "bg-emerald-500" },
+  { id: "amber", name: "Amber", bgClass: "bg-amber-500" },
+  { id: "rose", name: "Rose", bgClass: "bg-rose-500" },
+  { id: "cyan", name: "Cyan", bgClass: "bg-cyan-500" },
+  { id: "zinc", name: "Slate", bgClass: "bg-slate-500" },
 ];
 
 export const AddHeadingModal: React.FC<AddHeadingModalProps> = ({
@@ -24,14 +28,15 @@ export const AddHeadingModal: React.FC<AddHeadingModalProps> = ({
   onClose,
   onAdd,
 }) => {
-  const [title, setTitle] = useState('');
-  const [selectedColor, setSelectedColor] = useState<SectionHeading['color']>('blue');
+  const [title, setTitle] = useState("");
+  const [selectedColor, setSelectedColor] =
+    useState<SectionHeading["color"]>("blue");
 
   const handleSubmit = () => {
     if (!title.trim()) return;
     onAdd(title.trim(), selectedColor);
-    setTitle('');
-    setSelectedColor('blue');
+    setTitle("");
+    setSelectedColor("blue");
     onClose();
   };
 
@@ -54,7 +59,10 @@ export const AddHeadingModal: React.FC<AddHeadingModalProps> = ({
                 New Group
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} className="p-1.5 rounded-full bg-slate-100">
+            <TouchableOpacity
+              onPress={onClose}
+              className="p-1.5 rounded-full bg-slate-100"
+            >
               <X size={16} color="#64748B" />
             </TouchableOpacity>
           </View>
@@ -67,7 +75,7 @@ export const AddHeadingModal: React.FC<AddHeadingModalProps> = ({
             <TextInput
               value={title}
               onChangeText={setTitle}
-              placeholder="e.g. Chest Compounds, Triceps, Finishers"
+              placeholder="e.g. Chest Compounds or Triceps"
               placeholderTextColor="#94A3B8"
               autoFocus
               className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
@@ -86,11 +94,13 @@ export const AddHeadingModal: React.FC<AddHeadingModalProps> = ({
                   onPress={() => setSelectedColor(c.id)}
                   className={`w-9 h-9 rounded-xl items-center justify-center ${c.bgClass} ${
                     selectedColor === c.id
-                      ? 'border-2 border-white ring-2 ring-blue-600'
-                      : 'opacity-85'
+                      ? "border-2 border-white ring-2 ring-blue-600"
+                      : "opacity-85"
                   }`}
                 >
-                  {selectedColor === c.id && <Check size={16} color="#FFFFFF" />}
+                  {selectedColor === c.id && (
+                    <Check size={16} color="#FFFFFF" />
+                  )}
                 </TouchableOpacity>
               ))}
             </View>
@@ -111,7 +121,7 @@ export const AddHeadingModal: React.FC<AddHeadingModalProps> = ({
               onPress={handleSubmit}
               disabled={!title.trim()}
               className={`flex-1 py-3.5 rounded-xl flex-row items-center justify-center ${
-                title.trim() ? 'bg-blue-600' : 'bg-blue-200'
+                title.trim() ? "bg-blue-600" : "bg-blue-200"
               }`}
             >
               <Plus size={16} color="#FFFFFF" />
