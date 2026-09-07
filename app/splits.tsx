@@ -3,7 +3,7 @@ import {
   View,
   Text,
   TouchableOpacity,
-  FlatList,
+  ScrollView,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,18 +11,19 @@ import { useRouter } from 'expo-router';
 import {
   Plus,
   Dumbbell,
-  ChevronRight,
+  GripVertical,
   LogOut,
   Layers,
 } from 'lucide-react-native';
 import { useWorkouts } from '../src/context/WorkoutContext';
 import { useAuth } from '../src/context/AuthContext';
 import { CreateSplitModal } from '../src/components/CreateSplitModal';
+import { DraggableReorderList } from '../src/components/DraggableReorderList';
 import { TrainingSplit } from '../src/types/workout';
 
 export default function SplitsScreen() {
   const router = useRouter();
-  const { splits, workouts, isLoading, createSplit } = useWorkouts();
+  const { splits, workouts, isLoading, createSplit, reorderSplits } = useWorkouts();
   const { user, logout } = useAuth();
   const [createModalVisible, setCreateModalVisible] = useState(false);
 
@@ -39,7 +40,13 @@ export default function SplitsScreen() {
     router.replace('/');
   };
 
-  const renderSplitItem = ({ item }: { item: TrainingSplit }) => {
+  const renderSplitItem = ({
+    item,
+    dragHandleProps,
+  }: {
+    item: TrainingSplit;
+    dragHandleProps: any;
+  }) => {
     const splitWorkouts = workouts.filter((w) => w.splitId === item.id);
     const totalExercises = splitWorkouts.reduce(
       (acc, w) => acc + (w.exercises?.length || 0),
@@ -47,17 +54,17 @@ export default function SplitsScreen() {
     );
 
     return (
-      <TouchableOpacity
-        activeOpacity={0.75}
-        onPress={() =>
-          router.push({
-            pathname: '/split/[id]',
-            params: { id: item.id },
-          })
-        }
-        className="bg-white border border-slate-200 rounded-2xl p-5 mb-4 flex-row items-center justify-between shadow-sm"
-      >
-        <View className="flex-row items-center flex-1 pr-3">
+      <View className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 flex-row items-center justify-between shadow-sm">
+        <TouchableOpacity
+          activeOpacity={0.75}
+          onPress={() =>
+            router.push({
+              pathname: '/split/[id]',
+              params: { id: item.id },
+            })
+          }
+          className="flex-row items-center flex-1 pr-3"
+        >
           <View className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 items-center justify-center mr-4">
             <Dumbbell size={22} color="#2563EB" />
           </View>
@@ -76,10 +83,15 @@ export default function SplitsScreen() {
               </Text>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
 
-        <ChevronRight size={20} color="#94A3B8" />
-      </TouchableOpacity>
+        <View
+          {...dragHandleProps}
+          className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 active:bg-blue-50 cursor-grab active:cursor-grabbing"
+        >
+          <GripVertical size={20} color="#64748B" />
+        </View>
+      </View>
     );
   };
 
@@ -87,7 +99,11 @@ export default function SplitsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
-      <View className="flex-1 px-6 pt-4">
+      <ScrollView
+        className="flex-1 px-6 pt-4"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 40 }}
+      >
         {/* Top Bar with 'Hey [user]' and 'Logout' with icon */}
         <View className="flex-row items-center justify-between pb-3">
           <Text className="text-slate-600 text-sm font-bold tracking-wide">
@@ -127,16 +143,16 @@ export default function SplitsScreen() {
 
         {/* Splits List */}
         {isLoading ? (
-          <View className="flex-1 items-center justify-center">
+          <View className="py-16 items-center justify-center">
             <ActivityIndicator size="large" color="#2563EB" />
           </View>
         ) : (
-          <FlatList
+          <DraggableReorderList
             data={splits}
-            keyExtractor={(item) => item.id}
-            renderItem={renderSplitItem}
-            contentContainerStyle={{ paddingBottom: 40 }}
-            showsVerticalScrollIndicator={false}
+            onReorder={reorderSplits}
+            renderItem={({ item, dragHandleProps }) =>
+              renderSplitItem({ item, dragHandleProps })
+            }
             ListEmptyComponent={
               <View className="items-center justify-center py-16 px-4 bg-white border border-dashed border-slate-200 rounded-3xl mt-2">
                 <Layers size={44} color="#94A3B8" />
@@ -150,7 +166,7 @@ export default function SplitsScreen() {
             }
           />
         )}
-      </View>
+      </ScrollView>
 
       {/* 1-Input Create Split Modal */}
       <CreateSplitModal

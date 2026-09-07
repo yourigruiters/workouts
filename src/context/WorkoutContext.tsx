@@ -65,6 +65,9 @@ interface WorkoutContextType {
     exerciseId: string,
     setId: string
   ) => Promise<void>;
+  reorderSplits: (newSplits: TrainingSplit[]) => Promise<void>;
+  reorderWorkouts: (splitId: string, orderedSplitWorkouts: Workout[]) => Promise<void>;
+  reorderExercises: (workoutId: string, orderedExercises: ExerciseItem[]) => Promise<void>;
 }
 
 const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
@@ -387,6 +390,29 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     await updateWorkout({ ...workout, exercises: updatedExercises });
   };
 
+  const reorderSplits = async (newSplits: TrainingSplit[]) => {
+    await saveSplitsState(newSplits);
+  };
+
+  const reorderWorkouts = async (splitId: string, orderedSplitWorkouts: Workout[]) => {
+    let splitIndex = 0;
+    const updated = workouts.map((w) => {
+      if (w.splitId === splitId) {
+        const next = orderedSplitWorkouts[splitIndex];
+        splitIndex++;
+        return next || w;
+      }
+      return w;
+    });
+    await saveWorkoutsState(updated);
+  };
+
+  const reorderExercises = async (workoutId: string, orderedExercises: ExerciseItem[]) => {
+    const workout = getWorkoutById(workoutId);
+    if (!workout) return;
+    await updateWorkout({ ...workout, exercises: orderedExercises });
+  };
+
   return (
     <WorkoutContext.Provider
       value={{
@@ -413,6 +439,9 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         toggleSetType,
         updateSet,
         deleteSet,
+        reorderSplits,
+        reorderWorkouts,
+        reorderExercises,
       }}
     >
       {children}

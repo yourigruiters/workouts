@@ -11,20 +11,26 @@ import {
   ArrowLeft,
   Plus,
   Calendar,
-  ChevronRight,
+  GripVertical,
   Layers,
   Trash2,
 } from 'lucide-react-native';
 import { useWorkouts } from '../../src/context/WorkoutContext';
 import { CreateWorkoutModal } from '../../src/components/CreateWorkoutModal';
 import { ConfirmDeleteModal } from '../../src/components/ConfirmDeleteModal';
+import { DraggableReorderList } from '../../src/components/DraggableReorderList';
 import { Workout } from '../../src/types/workout';
 
 export default function SplitDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getSplitById, getWorkoutsForSplit, createWorkout, deleteSplit } =
-    useWorkouts();
+  const {
+    getSplitById,
+    getWorkoutsForSplit,
+    createWorkout,
+    deleteSplit,
+    reorderWorkouts,
+  } = useWorkouts();
 
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
@@ -150,19 +156,13 @@ export default function SplitDetailScreen() {
           Workouts List
         </Text>
 
-        {/* Workouts List Items (No delete icon here, and no grey target circle) */}
-        {workouts.length === 0 ? (
-          <View className="items-center justify-center py-12 px-4 bg-white border border-dashed border-slate-200 rounded-2xl mb-8">
-            <Layers size={40} color="#94A3B8" />
-            <Text className="text-slate-800 font-bold text-base mt-2.5">
-              No Workouts Added
-            </Text>
-            <Text className="text-slate-400 text-xs text-center mt-1">
-              Tap "Add workout" above to add routines to this split.
-            </Text>
-          </View>
-        ) : (
-          workouts.map((item) => {
+        {/* Workouts List Items with Drag & Hold Reordering */}
+        <DraggableReorderList
+          data={workouts}
+          onReorder={(newWorkouts) => {
+            if (id) reorderWorkouts(id, newWorkouts);
+          }}
+          renderItem={({ item, dragHandleProps }) => {
             const exerciseCount = item.exercises?.length || 0;
             const totalSets = (item.exercises || []).reduce(
               (sum, ex) => sum + (ex.sets?.length || 0),
@@ -170,18 +170,17 @@ export default function SplitDetailScreen() {
             );
 
             return (
-              <TouchableOpacity
-                key={item.id}
-                activeOpacity={0.75}
-                onPress={() =>
-                  router.push({
-                    pathname: '/workout/[id]',
-                    params: { id: item.id },
-                  })
-                }
-                className="bg-white border border-slate-200 rounded-2xl p-4 mb-3.5 flex-row items-center justify-between shadow-sm"
-              >
-                <View className="flex-row items-center flex-1 pr-3">
+              <View className="bg-white border border-slate-200 rounded-2xl p-4 mb-3.5 flex-row items-center justify-between shadow-sm">
+                <TouchableOpacity
+                  activeOpacity={0.75}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/workout/[id]',
+                      params: { id: item.id },
+                    })
+                  }
+                  className="flex-row items-center flex-1 pr-3"
+                >
                   <View className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 items-center justify-center mr-3.5">
                     <Calendar size={20} color="#2563EB" />
                   </View>
@@ -214,13 +213,29 @@ export default function SplitDetailScreen() {
                       </View>
                     </View>
                   </View>
-                </View>
+                </TouchableOpacity>
 
-                <ChevronRight size={20} color="#94A3B8" />
-              </TouchableOpacity>
+                <View
+                  {...dragHandleProps}
+                  className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 active:bg-blue-50 cursor-grab active:cursor-grabbing"
+                >
+                  <GripVertical size={20} color="#64748B" />
+                </View>
+              </View>
             );
-          })
-        )}
+          }}
+          ListEmptyComponent={
+            <View className="items-center justify-center py-12 px-4 bg-white border border-dashed border-slate-200 rounded-2xl mb-8">
+              <Layers size={40} color="#94A3B8" />
+              <Text className="text-slate-800 font-bold text-base mt-2.5">
+                No Workouts Added
+              </Text>
+              <Text className="text-slate-400 text-xs text-center mt-1">
+                Tap "Add workout" above to add routines to this split.
+              </Text>
+            </View>
+          }
+        />
 
         {/* Delete Training Split Button (with confirmation modal) */}
         <View className="mt-8 pt-6 border-t border-slate-200">

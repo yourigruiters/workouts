@@ -8,10 +8,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Dumbbell, Lock, Mail, ArrowRight } from 'lucide-react-native';
+import { Lock, Mail, ArrowRight } from 'lucide-react-native';
 import { useAuth } from '../src/context/AuthContext';
 
 export default function LandingScreen() {
@@ -58,8 +59,12 @@ export default function LandingScreen() {
         >
           {/* Top Logo & App Branding */}
           <View className="items-center mb-8">
-            <View className="w-16 h-16 rounded-2xl bg-blue-100 border border-blue-200 items-center justify-center mb-3 shadow-sm">
-              <Dumbbell size={34} color="#2563EB" />
+            <View className="w-24 h-24 rounded-3xl bg-white border border-slate-200 items-center justify-center mb-4 shadow-sm overflow-hidden p-2">
+              <Image
+                source={require('../assets/app-logo.png')}
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="contain"
+              />
             </View>
             <Text className="text-slate-900 text-3xl font-black tracking-tight">
               WORKOUTS

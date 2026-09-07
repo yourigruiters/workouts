@@ -6,6 +6,7 @@ import {
   Plus,
   ChevronDown,
   ChevronRight,
+  GripVertical,
 } from 'lucide-react-native';
 import { ExerciseItem, SetItem } from '../types/workout';
 import { MarqueeText } from './MarqueeText';
@@ -15,6 +16,7 @@ interface ExerciseCardProps {
   onOpenEdit: () => void;
   onAddSet: (type?: 'warmup' | 'active') => void;
   onOpenEditSet: (set: SetItem, label: string) => void;
+  dragHandleProps?: any;
 }
 
 export const ExerciseCard: React.FC<ExerciseCardProps> = ({
@@ -22,6 +24,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
   onOpenEdit,
   onAddSet,
   onOpenEditSet,
+  dragHandleProps,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -29,13 +32,13 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
 
   return (
     <View className="bg-white border border-slate-200/80 rounded-2xl p-4 mb-3.5 shadow-sm">
-      {/* Exercise Header Row: Tap to toggle open/close */}
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={() => setIsExpanded(!isExpanded)}
-        className="flex-row items-start justify-between"
-      >
-        <View className="flex-row items-start flex-1 pr-2">
+      {/* Exercise Header Row: Left side toggles open/close, right side has actions */}
+      <View className="flex-row items-start justify-between">
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => setIsExpanded(!isExpanded)}
+          className="flex-row items-start flex-1 pr-2"
+        >
           <View className="mt-1 mr-2">
             {isExpanded ? (
               <ChevronDown size={18} color="#475569" />
@@ -67,20 +70,29 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               </Text>
             )}
           </View>
-        </View>
-
-        {/* Top Right Action (Edit only, Info removed) */}
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={(e) => {
-            e.stopPropagation?.();
-            onOpenEdit();
-          }}
-          className="p-2 rounded-xl bg-slate-100 border border-slate-200"
-        >
-          <Edit3 size={15} color="#475569" />
         </TouchableOpacity>
-      </TouchableOpacity>
+
+        {/* Top Right Action (Edit & Reorder Handle) */}
+        <View className="flex-row items-center ml-2">
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={(e) => {
+              e.stopPropagation?.();
+              onOpenEdit();
+            }}
+            className="p-2 rounded-xl bg-slate-100 border border-slate-200 mr-1.5 hover:bg-slate-200"
+          >
+            <Edit3 size={15} color="#475569" />
+          </TouchableOpacity>
+
+          <View
+            {...(dragHandleProps || {})}
+            className="p-2 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200 active:bg-blue-50 cursor-grab active:cursor-grabbing"
+          >
+            <GripVertical size={15} color="#475569" />
+          </View>
+        </View>
+      </View>
 
       {/* Elements hidden when not toggled (only shown when expanded) */}
       {isExpanded && (

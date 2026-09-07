@@ -22,6 +22,7 @@ import { AddHeadingModal } from '../../src/components/AddHeadingModal';
 import { EditGroupModal } from '../../src/components/EditGroupModal';
 import { EditSetModal } from '../../src/components/EditSetModal';
 import { ConfirmDeleteModal } from '../../src/components/ConfirmDeleteModal';
+import { DraggableReorderList } from '../../src/components/DraggableReorderList';
 import { ExerciseItem, SectionHeading, SetItem } from '../../src/types/workout';
 
 export default function WorkoutDetailScreen() {
@@ -40,6 +41,7 @@ export default function WorkoutDetailScreen() {
     updateSet,
     deleteSet,
     deleteWorkout,
+    reorderExercises,
   } = useWorkouts();
 
   const workout = getWorkoutById(id || '');
@@ -115,6 +117,37 @@ export default function WorkoutDetailScreen() {
 
   // Fallback top level exercises
   const topLevelExercises = (workout.exercises || []).filter((ex) => !ex.headingId);
+
+  const handleReorderGroupExercises = (
+    headingId: string,
+    reorderedGroupExercises: ExerciseItem[]
+  ) => {
+    if (!workout) return;
+    let groupIdx = 0;
+    const newExercises = (workout.exercises || []).map((ex) => {
+      if (ex.headingId === headingId) {
+        const next = reorderedGroupExercises[groupIdx];
+        groupIdx++;
+        return next || ex;
+      }
+      return ex;
+    });
+    reorderExercises(workout.id, newExercises);
+  };
+
+  const handleReorderTopLevelExercises = (reorderedTopLevel: ExerciseItem[]) => {
+    if (!workout) return;
+    let topIdx = 0;
+    const newExercises = (workout.exercises || []).map((ex) => {
+      if (!ex.headingId) {
+        const next = reorderedTopLevel[topIdx];
+        topIdx++;
+        return next || ex;
+      }
+      return ex;
+    });
+    reorderExercises(workout.id, newExercises);
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
@@ -198,24 +231,30 @@ export default function WorkoutDetailScreen() {
         {/* 4. Groups with Nested Exercises Inside Tinted Dropdown Container */}
 
         {/* Fallback top level exercises */}
-        {topLevelExercises.map((exercise) => (
-          <ExerciseCard
-            key={exercise.id}
-            exercise={exercise}
-            onOpenEdit={() => setEditModalExercise(exercise)}
-            onAddSet={(type) =>
-              addSet(workout.id, exercise.id, {
-                type: type || 'active',
-                repRange: '8-10',
-                weightKg: 20,
-                restTime: '1:30',
-              })
-            }
-            onOpenEditSet={(set, label) =>
-              setEditSetTarget({ exerciseId: exercise.id, set, label })
-            }
+        {topLevelExercises.length > 0 && (
+          <DraggableReorderList
+            data={topLevelExercises}
+            onReorder={handleReorderTopLevelExercises}
+            renderItem={({ item: exercise, dragHandleProps }) => (
+              <ExerciseCard
+                exercise={exercise}
+                dragHandleProps={dragHandleProps}
+                onOpenEdit={() => setEditModalExercise(exercise)}
+                onAddSet={(type) =>
+                  addSet(workout.id, exercise.id, {
+                    type: type || 'active',
+                    repRange: '8-10',
+                    weightKg: 20,
+                    restTime: '1:30',
+                  })
+                }
+                onOpenEditSet={(set, label) =>
+                  setEditSetTarget({ exerciseId: exercise.id, set, label })
+                }
+              />
+            )}
           />
-        ))}
+        )}
 
         {/* Categorized Groups with Nested Exercise Cards */}
         {headings.map((heading) => {
@@ -238,24 +277,30 @@ export default function WorkoutDetailScreen() {
               }
               onEditGroup={() => setEditGroupTarget(heading)}
             >
-              {sectionExercises.map((exercise) => (
-                <ExerciseCard
-                  key={exercise.id}
-                  exercise={exercise}
-                  onOpenEdit={() => setEditModalExercise(exercise)}
-                  onAddSet={(type) =>
-                    addSet(workout.id, exercise.id, {
-                      type: type || 'active',
-                      repRange: '8-10',
-                      weightKg: 20,
-                      restTime: '1:30',
-                    })
-                  }
-                  onOpenEditSet={(set, label) =>
-                    setEditSetTarget({ exerciseId: exercise.id, set, label })
-                  }
-                />
-              ))}
+              <DraggableReorderList
+                data={sectionExercises}
+                onReorder={(reordered) =>
+                  handleReorderGroupExercises(heading.id, reordered)
+                }
+                renderItem={({ item: exercise, dragHandleProps }) => (
+                  <ExerciseCard
+                    exercise={exercise}
+                    dragHandleProps={dragHandleProps}
+                    onOpenEdit={() => setEditModalExercise(exercise)}
+                    onAddSet={(type) =>
+                      addSet(workout.id, exercise.id, {
+                        type: type || 'active',
+                        repRange: '8-10',
+                        weightKg: 20,
+                        restTime: '1:30',
+                      })
+                    }
+                    onOpenEditSet={(set, label) =>
+                      setEditSetTarget({ exerciseId: exercise.id, set, label })
+                    }
+                  />
+                )}
+              />
             </GroupSection>
           );
         })}
