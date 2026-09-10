@@ -8,6 +8,8 @@ import {
   SetType,
 } from '../types/workout';
 import { storageService } from '../services/storageService';
+import { firebaseService } from '../services/firebaseService';
+import { useAuth } from './AuthContext';
 
 interface WorkoutContextType {
   splits: TrainingSplit[];
@@ -75,33 +77,71 @@ interface WorkoutContextType {
 const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
 
 export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [splits, setSplits] = useState<TrainingSplit[]>([]);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // Load data on start or when user logs in / switches account
   useEffect(() => {
+    let isCancelled = false;
+
     const loadData = async () => {
+      setIsLoading(true);
       try {
-        const [loadedSplits, loadedWorkouts] = await Promise.all([
+        if (user && user.uid && firebaseService.isConfigured) {
+          // 1. Fetch directly from Cloud Firestore
+          const cloudSplits = await firebaseService.fetchSplitsFromCloud(user.uid);
+          const cloudWorkouts = await firebaseService.fetchWorkoutsFromCloud(user.uid);
+
+          if (!isCancelled) {
+            setSplits(cloudSplits);
+            setWorkouts(cloudWorkouts);
+            await storageService.saveSplits(cloudSplits);
+            await storageService.saveWorkouts(cloudWorkouts);
+          }
+        } else {
+          // Local fallback
+          const [loadedSplits, loadedWorkouts] = await Promise.all([
+            storageService.getSplits(),
+            storageService.getWorkouts(),
+          ]);
+          if (!isCancelled) {
+            setSplits(loadedSplits);
+            setWorkouts(loadedWorkouts);
+          }
+        }
+      } catch (e) {
+        console.error('Failed loading workout data from Firestore:', e);
+        const [cachedSplits, cachedWorkouts] = await Promise.all([
           storageService.getSplits(),
           storageService.getWorkouts(),
         ]);
-        setSplits(loadedSplits);
-        setWorkouts(loadedWorkouts);
-      } catch (e) {
-        console.error('Failed loading workout data:', e);
+        if (!isCancelled) {
+          setSplits(cachedSplits);
+          setWorkouts(cachedWorkouts);
+        }
       } finally {
-        setIsLoading(false);
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
       }
     };
-    loadData();
-  }, []);
 
+    loadData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [user?.uid]);
+
+  // Save splits state locally
   const saveSplitsState = async (newSplits: TrainingSplit[]) => {
     setSplits(newSplits);
     await storageService.saveSplits(newSplits);
   };
 
+  // Save workouts state locally
   const saveWorkoutsState = async (newWorkouts: Workout[]) => {
     setWorkouts(newWorkouts);
     await storageService.saveWorkouts(newWorkouts);
@@ -116,20 +156,34 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
     const updated = [newSplit, ...splits];
     await saveSplitsState(updated);
+
+    if (user && user.uid && firebaseService.isConfigured) {
+      await firebaseService.syncSplitToCloud(user.uid, newSplit, 0);
+      await firebaseService.syncSplitsOrderToCloud(user.uid, updated);
+    }
+
     return newSplit;
   };
 
   const updateSplit = async (id: string, name: string, description?: string) => {
-    const updated = splits.map((s) =>
-      s.id === id
-        ? {
-            ...s,
-            name: name.trim() || s.name,
-            description: description?.trim() || undefined,
-          }
-        : s
-    );
+    let targetSplit: TrainingSplit | null = null;
+    const updated = splits.map((s) => {
+      if (s.id === id) {
+        targetSplit = {
+          ...s,
+          name: name.trim() || s.name,
+          description: description?.trim() || undefined,
+        };
+        return targetSplit;
+      }
+      return s;
+    });
+
     await saveSplitsState(updated);
+
+    if (targetSplit && user && user.uid && firebaseService.isConfigured) {
+      await firebaseService.syncSplitToCloud(user.uid, targetSplit);
+    }
   };
 
   const deleteSplit = async (id: string) => {
@@ -139,6 +193,10 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       saveSplitsState(updatedSplits),
       saveWorkoutsState(updatedWorkouts),
     ]);
+
+    if (user && user.uid && firebaseService.isConfigured) {
+      await firebaseService.deleteSplitFromCloud(user.uid, id);
+    }
   };
 
   const createWorkout = async (
@@ -157,25 +215,42 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
     const updated = [...workouts, newWorkout];
     await saveWorkoutsState(updated);
+
+    if (user && user.uid && firebaseService.isConfigured) {
+      await firebaseService.syncWorkoutToCloud(user.uid, newWorkout, updated.length - 1);
+    }
+
     return newWorkout;
   };
 
   const updateWorkoutDetails = async (id: string, name: string, focus?: string) => {
-    const updated = workouts.map((w) =>
-      w.id === id
-        ? {
-            ...w,
-            name: name.trim() || w.name,
-            focus: focus !== undefined ? focus.trim() : w.focus,
-          }
-        : w
-    );
+    let targetWorkout: Workout | null = null;
+    const updated = workouts.map((w) => {
+      if (w.id === id) {
+        targetWorkout = {
+          ...w,
+          name: name.trim() || w.name,
+          focus: focus !== undefined ? focus.trim() : w.focus,
+        };
+        return targetWorkout;
+      }
+      return w;
+    });
+
     await saveWorkoutsState(updated);
+
+    if (targetWorkout && user && user.uid && firebaseService.isConfigured) {
+      await firebaseService.syncWorkoutToCloud(user.uid, targetWorkout);
+    }
   };
 
   const deleteWorkout = async (id: string) => {
     const updated = workouts.filter((w) => w.id !== id);
     await saveWorkoutsState(updated);
+
+    if (user && user.uid && firebaseService.isConfigured) {
+      await firebaseService.deleteWorkoutFromCloud(user.uid, id);
+    }
   };
 
   const updateWorkout = async (updatedWorkout: Workout) => {
@@ -183,6 +258,10 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       w.id === updatedWorkout.id ? updatedWorkout : w
     );
     await saveWorkoutsState(updated);
+
+    if (user && user.uid && firebaseService.isConfigured) {
+      await firebaseService.syncWorkoutToCloud(user.uid, updatedWorkout);
+    }
   };
 
   const getSplitById = (id: string) => splits.find((s) => s.id === id);
@@ -307,7 +386,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const updatedExercises = workout.exercises.map((ex) => {
       if (ex.id === exerciseId) {
         if (newSet.type === 'warmup') {
-          // Warmup sets when added should always be at the top
+          // Warmup sets when added should always be placed after existing warmups
           const lastWarmupIndex = ex.sets.reduce(
             (lastIdx, s, idx) => (s.type === 'warmup' ? idx : lastIdx),
             -1
@@ -421,6 +500,9 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const reorderSplits = async (newSplits: TrainingSplit[]) => {
     await saveSplitsState(newSplits);
+    if (user && user.uid && firebaseService.isConfigured) {
+      await firebaseService.syncSplitsOrderToCloud(user.uid, newSplits);
+    }
   };
 
   const reorderWorkouts = async (splitId: string, orderedSplitWorkouts: Workout[]) => {
@@ -434,6 +516,9 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return w;
     });
     await saveWorkoutsState(updated);
+    if (user && user.uid && firebaseService.isConfigured) {
+      await firebaseService.syncWorkoutsOrderToCloud(user.uid, updated);
+    }
   };
 
   const reorderExercises = async (workoutId: string, orderedExercises: ExerciseItem[]) => {

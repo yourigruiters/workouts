@@ -20,9 +20,15 @@ import { getFriendlyAuthErrorMessage } from "../src/utils/authErrors";
 
 export default function LandingScreen() {
   const router = useRouter();
-  const { loginWithEmail, registerWithEmail } = useAuth();
+  const { user, isLoading: authLoading, loginWithEmail, registerWithEmail } = useAuth();
 
   const shiftY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/splits");
+    }
+  }, [user, authLoading]);
 
   useEffect(() => {
     const showEvent =

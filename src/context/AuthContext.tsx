@@ -7,58 +7,47 @@ interface AuthContextType {
   isLoading: boolean;
   isFirebaseReady: boolean;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
-  registerWithEmail: (email: string, pass: string) => Promise<void>;
-  loginAsGuest: () => void;
+  registerWithEmail: (email: string, pass: string, displayName?: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>({
-    uid: 'guest-athlete',
-    email: 'athlete@workout.app',
-    displayName: 'Athlete',
-    isGuest: true,
-  });
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (firebaseService.isConfigured) {
-      const unsub = firebaseService.onAuthChanged((fbUser) => {
+      const unsub = firebaseService.onAuthChanged(async (fbUser) => {
         if (fbUser) {
+          const profile = await firebaseService.getUserProfile(fbUser.uid);
           setUser({
             uid: fbUser.uid,
-            email: fbUser.email,
-            displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Athlete',
-            isGuest: false,
+            email: fbUser.email || profile?.email || '',
+            displayName: profile?.displayName || fbUser.displayName || fbUser.email?.split('@')[0] || 'Athlete',
           });
+        } else {
+          setUser(null);
         }
+        setIsLoading(false);
       });
       return () => unsub && unsub();
+    } else {
+      setIsLoading(false);
     }
   }, []);
 
   const loginWithEmail = async (email: string, pass: string) => {
     setIsLoading(true);
     try {
-      if (firebaseService.isConfigured) {
-        const fbUser = await firebaseService.login(email, pass);
-        if (fbUser) {
-          setUser({
-            uid: fbUser.uid,
-            email: fbUser.email,
-            displayName: fbUser.displayName || email.split('@')[0],
-            isGuest: false,
-          });
-        }
-      } else {
-        // Mock fallback login for testing before Firebase .env is populated
+      const fbUser = await firebaseService.login(email, pass);
+      if (fbUser) {
+        const profile = await firebaseService.getUserProfile(fbUser.uid);
         setUser({
-          uid: 'mock-user-1',
-          email,
-          displayName: email.split('@')[0],
-          isGuest: false,
+          uid: fbUser.uid,
+          email: fbUser.email || email,
+          displayName: profile?.displayName || fbUser.displayName || email.split('@')[0],
         });
       }
     } finally {
@@ -66,45 +55,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const registerWithEmail = async (email: string, pass: string) => {
+  const registerWithEmail = async (email: string, pass: string, displayName?: string) => {
     setIsLoading(true);
     try {
-      if (firebaseService.isConfigured) {
-        const fbUser = await firebaseService.register(email, pass);
-        if (fbUser) {
-          setUser({
-            uid: fbUser.uid,
-            email: fbUser.email,
-            displayName: fbUser.displayName || email.split('@')[0],
-            isGuest: false,
-          });
-        }
-      } else {
+      const fbUser = await firebaseService.register(email, pass, displayName);
+      if (fbUser) {
         setUser({
-          uid: 'mock-user-' + Date.now(),
-          email,
-          displayName: email.split('@')[0],
-          isGuest: false,
+          uid: fbUser.uid,
+          email: fbUser.email || email,
+          displayName: displayName?.trim() || fbUser.displayName || email.split('@')[0],
         });
       }
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const loginAsGuest = () => {
-    setUser({
-      uid: 'guest-' + Date.now(),
-      email: 'guest@workout.app',
-      displayName: 'Guest Athlete',
-      isGuest: true,
-    });
   };
 
   const logout = async () => {
-    if (firebaseService.isConfigured) {
-      await firebaseService.logout();
-    }
+    await firebaseService.logout();
     setUser(null);
   };
 
@@ -116,7 +84,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isFirebaseReady: firebaseService.isConfigured,
         loginWithEmail,
         registerWithEmail,
-        loginAsGuest,
         logout,
       }}
     >
