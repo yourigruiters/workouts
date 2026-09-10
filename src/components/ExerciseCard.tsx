@@ -31,19 +31,24 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
   const totalSets = exercise.sets?.length || 0;
 
   return (
-    <View className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+    <View className="bg-white border border-slate-200/80 rounded-2xl p-4">
       {/* Exercise Header Row: Left side toggles open/close, right side has actions */}
       <View className="flex-row items-start justify-between">
         <TouchableOpacity
-          activeOpacity={0.7}
+          disabled={isEditMode}
+          activeOpacity={isEditMode ? 1 : 0.7}
           onPress={() => setIsExpanded(!isExpanded)}
-          className="flex-row items-start flex-1 pr-2"
+          className={`flex-row items-start flex-1 pr-2 ${
+            isEditMode ? "cursor-default" : ""
+          }`}
         >
           <View className="mt-1 mr-2">
-            {isExpanded ? (
-              <ChevronDown size={18} color="#475569" />
-            ) : (
-              <ChevronRight size={18} color="#475569" />
+            {!isEditMode && (
+              isExpanded ? (
+                <ChevronDown size={18} color="#475569" />
+              ) : (
+                <ChevronRight size={18} color="#475569" />
+              )
             )}
           </View>
 
@@ -53,8 +58,8 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                 {exercise.name}
               </Text>
 
-              {/* Set Count Pill when collapsed */}
-              {!isExpanded && (
+              {/* Set Count Pill when collapsed or in edit mode */}
+              {(!isExpanded || isEditMode) && (
                 <View className="bg-slate-100 px-2 py-0.5 rounded-full my-0.5">
                   <Text className="text-slate-600 text-[11px] font-bold">
                     {totalSets} {totalSets === 1 ? "set" : "sets"}
@@ -72,24 +77,26 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           </View>
         </TouchableOpacity>
 
-        {/* Top Right Action (Edit, and in Edit Mode: Reorder Handle & Delete) */}
+        {/* Top Right Actions: In Default Mode: Edit Exercise button; In Edit Mode: Reorder Handle & Delete */}
         <View className="flex-row items-center ml-2">
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={(e) => {
-              e.stopPropagation?.();
-              onOpenEdit();
-            }}
-            className="p-2 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200"
-          >
-            <Edit3 size={15} color="#475569" />
-          </TouchableOpacity>
+          {!isEditMode && (
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={(e) => {
+                e.stopPropagation?.();
+                onOpenEdit();
+              }}
+              className="p-2 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200"
+            >
+              <Edit3 size={15} color="#475569" />
+            </TouchableOpacity>
+          )}
 
           {isEditMode && (
             <>
               <View
                 {...(dragHandleProps || {})}
-                className="p-2 rounded-xl bg-slate-100 border border-slate-200 ml-1.5 hover:bg-slate-200 active:bg-blue-50 cursor-grab active:cursor-grabbing"
+                className="p-2 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200 active:bg-blue-50 cursor-grab active:cursor-grabbing"
               >
                 <GripVertical size={15} color="#64748B" />
               </View>
@@ -111,8 +118,8 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
         </View>
       </View>
 
-      {/* Elements hidden when not toggled (only shown when expanded) */}
-      {isExpanded && (
+      {/* Elements hidden when not toggled or in edit mode (only shown when expanded in default mode) */}
+      {!isEditMode && isExpanded && (
         <View className="mt-3 pt-3 border-t border-slate-100">
           {/* Extra Details (Clean text without whole card styling) */}
           {Boolean(exercise.details) && (

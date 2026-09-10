@@ -34,6 +34,7 @@ export default function WorkoutDetailScreen() {
     updateExercise,
     deleteExercise,
     reorderExercises,
+    updateWorkout,
   } = useWorkouts();
 
   const workout = getWorkoutById(id || "");
@@ -42,6 +43,9 @@ export default function WorkoutDetailScreen() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [tempExercises, setTempExercises] = useState<ExerciseItem[]>(
     workout?.exercises || [],
+  );
+  const [tempHeadings, setTempHeadings] = useState<SectionHeading[]>(
+    workout?.headings || [],
   );
 
   // Group Collapsed / Expanded State (Always starts completely closed)
@@ -68,17 +72,23 @@ export default function WorkoutDetailScreen() {
 
   const handleStartEdit = () => {
     setTempExercises(workout?.exercises || []);
+    setTempHeadings(workout?.headings || []);
     setIsEditMode(true);
   };
 
   const handleCancelEdit = () => {
     setTempExercises(workout?.exercises || []);
+    setTempHeadings(workout?.headings || []);
     setIsEditMode(false);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (workout) {
-      reorderExercises(workout.id, tempExercises);
+      await updateWorkout({
+        ...workout,
+        headings: tempHeadings,
+        exercises: tempExercises,
+      });
     }
     setIsEditMode(false);
   };
@@ -99,7 +109,9 @@ export default function WorkoutDetailScreen() {
     );
   }
 
-  const headings = workout.headings || [];
+  const headings = isEditMode
+    ? tempHeadings
+    : workout.headings || [];
   const hasGroups = headings.length > 0;
 
   const currentExercises = isEditMode
@@ -114,8 +126,28 @@ export default function WorkoutDetailScreen() {
 
   const handleConfirmDeleteGroup = () => {
     if (!deleteGroupTarget) return;
-    deleteHeading(workout.id, deleteGroupTarget.id);
+    if (isEditMode) {
+      const targetId = deleteGroupTarget.id;
+      setTempHeadings((prev) => prev.filter((h) => h.id !== targetId));
+      setTempExercises((prev) =>
+        prev.filter((ex) => ex.headingId !== targetId),
+      );
+    } else {
+      deleteHeading(workout.id, deleteGroupTarget.id);
+    }
     setDeleteGroupTarget(null);
+  };
+
+  const handleConfirmDeleteExercise = () => {
+    if (!deleteTargetExercise) return;
+    if (isEditMode) {
+      setTempExercises((prev) =>
+        prev.filter((ex) => ex.id !== deleteTargetExercise.id),
+      );
+    } else {
+      deleteExercise(workout.id, deleteTargetExercise.id);
+    }
+    setDeleteTargetExercise(null);
   };
 
   const handleAddExerciseClick = () => {
@@ -185,7 +217,7 @@ export default function WorkoutDetailScreen() {
         <View className="flex-row items-center mb-5 pb-3 border-b border-slate-200">
           <TouchableOpacity
             onPress={() => router.back()}
-            className="p-2.5 rounded-xl bg-white border border-slate-200 mr-3.5 shadow-sm"
+            className="p-2.5 rounded-xl bg-white border border-slate-200 mr-3.5"
           >
             <ArrowLeft size={18} color="#334155" />
           </TouchableOpacity>
@@ -206,7 +238,7 @@ export default function WorkoutDetailScreen() {
         </View>
 
         {/* 2. Top Overview: Directly below header (X Exercises, X Sets) */}
-        <View className="bg-white border border-slate-200 p-4 rounded-2xl flex-row items-center justify-around shadow-sm mb-5">
+        <View className="bg-white border border-slate-200 p-4 rounded-2xl flex-row items-center justify-around mb-5">
           <View className="flex-1 items-center">
             <Text className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">
               Total Exercises
@@ -399,12 +431,7 @@ export default function WorkoutDetailScreen() {
         title={`Delete ${deleteTargetExercise?.name || ""}?`}
         message="Are you sure you want to delete this exercise? All logged sets will be permanently removed."
         confirmText="Delete Exercise"
-        onConfirm={() => {
-          if (deleteTargetExercise) {
-            deleteExercise(workout.id, deleteTargetExercise.id);
-            setDeleteTargetExercise(null);
-          }
-        }}
+        onConfirm={handleConfirmDeleteExercise}
         onCancel={() => setDeleteTargetExercise(null)}
       />
 
@@ -431,12 +458,21 @@ export default function WorkoutDetailScreen() {
         onClose={() => setEditGroupTarget(null)}
         onSave={(title, color) => {
           if (editGroupTarget) {
-            updateHeading(workout.id, editGroupTarget.id, title, color);
+            if (isEditMode) {
+              setTempHeadings((prev) =>
+                prev.map((h) =>
+                  h.id === editGroupTarget.id ? { ...h, title, color } : h,
+                ),
+              );
+            } else {
+              updateHeading(workout.id, editGroupTarget.id, title, color);
+            }
           }
         }}
         onDelete={() => {
           if (editGroupTarget) {
-            setDeleteGroupTarget(editGroupTarget);
+            const groupToDelete = editGroupTarget;
+            setDeleteGroupTarget(groupToDelete);
             setEditGroupTarget(null);
           }
         }}

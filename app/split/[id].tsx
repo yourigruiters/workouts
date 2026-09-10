@@ -56,11 +56,29 @@ export default function SplitDetailScreen() {
     setIsEditMode(false);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (id) {
-      reorderWorkouts(id, tempWorkouts);
+      const removedWorkouts = workouts.filter(
+        (w) => !tempWorkouts.some((tw) => tw.id === w.id),
+      );
+      for (const r of removedWorkouts) {
+        await deleteWorkout(r.id);
+      }
+      await reorderWorkouts(id, tempWorkouts);
     }
     setIsEditMode(false);
+  };
+
+  const handleConfirmDeleteWorkout = () => {
+    if (!deleteTargetWorkout) return;
+    if (isEditMode) {
+      setTempWorkouts((prev) =>
+        prev.filter((w) => w.id !== deleteTargetWorkout.id),
+      );
+    } else {
+      deleteWorkout(deleteTargetWorkout.id);
+    }
+    setDeleteTargetWorkout(null);
   };
 
   const handleCreateWorkout = async (name: string, focus?: string) => {
@@ -88,11 +106,13 @@ export default function SplitDetailScreen() {
     );
   }
 
-  const totalSplitExercises = workouts.reduce(
+  const currentWorkouts = isEditMode ? tempWorkouts : workouts;
+
+  const totalSplitExercises = currentWorkouts.reduce(
     (acc, w) => acc + (w.exercises?.length || 0),
     0
   );
-  const totalSplitSets = workouts.reduce(
+  const totalSplitSets = currentWorkouts.reduce(
     (acc, w) =>
       acc + (w.exercises || []).reduce((sAcc, ex) => sAcc + (ex.sets?.length || 0), 0),
     0
@@ -109,7 +129,7 @@ export default function SplitDetailScreen() {
         <View className="flex-row items-center mb-5 pb-3 border-b border-slate-200">
           <TouchableOpacity
             onPress={() => router.back()}
-            className="p-2.5 rounded-xl bg-white border border-slate-200 mr-3.5 shadow-sm"
+            className="p-2.5 rounded-xl bg-white border border-slate-200 mr-3.5"
           >
             <ArrowLeft size={18} color="#334155" />
           </TouchableOpacity>
@@ -128,13 +148,13 @@ export default function SplitDetailScreen() {
         </View>
 
         {/* Overview Summary Banner */}
-        <View className="bg-white border border-slate-200 p-4 rounded-2xl flex-row items-center justify-around shadow-sm mb-5">
+        <View className="bg-white border border-slate-200 p-4 rounded-2xl flex-row items-center justify-around mb-5">
           <View className="items-center">
             <Text className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">
               Workouts
             </Text>
             <Text className="text-slate-900 text-xl font-bold mt-0.5">
-              {workouts.length}
+              {currentWorkouts.length}
             </Text>
           </View>
           <View className="w-[1px] h-8 bg-slate-200" />
@@ -233,7 +253,7 @@ export default function SplitDetailScreen() {
             );
 
             return (
-              <View className="bg-white border border-slate-200 rounded-2xl p-4 flex-row items-center justify-between shadow-sm">
+              <View className="bg-white border border-slate-200 rounded-2xl p-4 flex-row items-center justify-between">
                 <TouchableOpacity
                   disabled={isEditMode}
                   activeOpacity={isEditMode ? 1 : 0.75}
@@ -336,7 +356,8 @@ export default function SplitDetailScreen() {
         }}
         onDelete={() => {
           if (editTargetWorkout) {
-            setDeleteTargetWorkout(editTargetWorkout);
+            const workoutToDelete = editTargetWorkout;
+            setDeleteTargetWorkout(workoutToDelete);
             setEditTargetWorkout(null);
           }
         }}
@@ -348,12 +369,7 @@ export default function SplitDetailScreen() {
         title={`Delete ${deleteTargetWorkout?.name || ''}?`}
         message="Are you sure you want to delete this workout? All exercises and sets inside will be permanently removed."
         confirmText="Delete Workout"
-        onConfirm={() => {
-          if (deleteTargetWorkout) {
-            deleteWorkout(deleteTargetWorkout.id);
-            setDeleteTargetWorkout(null);
-          }
-        }}
+        onConfirm={handleConfirmDeleteWorkout}
         onCancel={() => setDeleteTargetWorkout(null)}
       />
     </SafeAreaView>

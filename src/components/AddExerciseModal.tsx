@@ -147,7 +147,7 @@ export const AddExerciseModal: React.FC<AddExerciseModalProps> = ({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="flex-1 justify-end bg-black/40"
       >
-        <View className="bg-white border-t border-slate-200 rounded-t-3xl p-6 max-h-[90%] shadow-2xl">
+        <View className="bg-white border-t border-slate-200 rounded-t-3xl p-6 max-h-[90%]">
           {/* Header */}
           <View className="flex-row items-center justify-between pb-3.5 border-b border-slate-100">
             <Text className="text-slate-900 text-lg font-bold">
@@ -205,7 +205,7 @@ export const AddExerciseModal: React.FC<AddExerciseModalProps> = ({
                         onPress={() => setHeadingId(h.id)}
                         className={`mr-2.5 px-4 py-2 rounded-xl border ${
                           isSelected
-                            ? "bg-blue-50 border-blue-600 shadow-sm"
+                            ? "bg-blue-50 border-blue-600"
                             : "bg-slate-50 border-slate-200"
                         }`}
                       >
@@ -358,7 +358,7 @@ export const AddExerciseModal: React.FC<AddExerciseModalProps> = ({
                     : "bg-slate-300 justify-start"
                 }`}
               >
-                <View className="w-6 h-6 rounded-full bg-white shadow-sm" />
+                <View className="w-6 h-6 rounded-full bg-white border border-slate-200" />
               </TouchableOpacity>
             </View>
 
@@ -437,7 +437,7 @@ export const AddExerciseModal: React.FC<AddExerciseModalProps> = ({
                       return (
                         <View
                           key={s.id}
-                          className="flex-row items-center bg-white border border-slate-200 rounded-xl p-2 my-0.5 shadow-xs"
+                          className="flex-row items-center bg-white border border-slate-200 rounded-xl p-2 my-0.5"
                         >
                           {/* Type toggle pill */}
                           <TouchableOpacity

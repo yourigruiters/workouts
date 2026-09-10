@@ -88,7 +88,7 @@ export const SectionDivider: React.FC<SectionDividerProps> = ({
       <TouchableOpacity
         activeOpacity={0.75}
         onPress={onToggleCollapse}
-        className={`flex-row items-center justify-between px-4 py-3 rounded-2xl border ${theme.bg} ${theme.border} shadow-sm`}
+        className={`flex-row items-center justify-between px-4 py-3 rounded-2xl border ${theme.bg} ${theme.border}`}
       >
         <View className="flex-row items-center flex-1 space-x-2">
           {isCollapsed ? (

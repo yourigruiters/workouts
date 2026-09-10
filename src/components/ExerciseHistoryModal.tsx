@@ -26,7 +26,7 @@ export const ExerciseHistoryModal: React.FC<ExerciseHistoryModalProps> = ({
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-end bg-black/40">
-        <View className="bg-white border-t border-slate-200 rounded-t-3xl p-6 max-h-[85%] shadow-2xl">
+        <View className="bg-white border-t border-slate-200 rounded-t-3xl p-6 max-h-[85%]">
           {/* Modal Header */}
           <View className="flex-row items-center justify-between pb-3.5 border-b border-slate-100">
             <View className="flex-1 pr-3">

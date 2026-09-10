@@ -104,7 +104,7 @@ export const GroupSection: React.FC<GroupSectionProps> = ({
     <View
       className={`mt-5 rounded-3xl border ${theme.containerBorder} ${
         isCollapsed ? theme.headerBg : theme.containerBg
-      } overflow-hidden shadow-sm`}
+      } overflow-hidden`}
     >
       {/* Group Header Bar */}
       <TouchableOpacity

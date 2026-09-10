@@ -27,7 +27,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
       onRequestClose={onCancel}
     >
       <View className="flex-1 justify-center items-center bg-black/40 px-6">
-        <View className="bg-white border border-slate-200 rounded-3xl p-6 w-full max-w-md shadow-2xl">
+        <View className="bg-white border border-slate-200 rounded-3xl p-6 w-full max-w-md">
           {/* Header Icon */}
           <View className="flex-row items-center justify-between pb-3">
             <View className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-100 items-center justify-center">
@@ -62,7 +62,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={onConfirm}
-              className="flex-1 bg-rose-600 py-3.5 rounded-xl flex-row items-center justify-center shadow-sm"
+              className="flex-1 bg-rose-600 py-3.5 rounded-xl flex-row items-center justify-center"
             >
               <Trash2 size={16} color="#FFFFFF" />
               <Text className="text-white font-bold text-sm ml-1.5">

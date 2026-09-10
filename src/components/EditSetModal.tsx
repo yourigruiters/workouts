@@ -73,7 +73,7 @@ export const EditSetModal: React.FC<EditSetModalProps> = ({
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View className="w-full max-w-md">
-            <View className="bg-white border border-slate-200 rounded-3xl p-6 w-full shadow-2xl">
+            <View className="bg-white border border-slate-200 rounded-3xl p-6 w-full">
               {/* Header */}
               <View className="flex-row items-center justify-between pb-3.5 border-b border-slate-100">
                 <View className="flex-row items-center">

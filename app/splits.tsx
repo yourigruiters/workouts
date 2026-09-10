@@ -58,9 +58,27 @@ export default function SplitsScreen() {
     setIsEditMode(false);
   };
 
-  const handleSaveEdit = () => {
-    reorderSplits(tempSplits);
+  const handleSaveEdit = async () => {
+    const removedSplits = splits.filter(
+      (s) => !tempSplits.some((ts) => ts.id === s.id),
+    );
+    for (const r of removedSplits) {
+      await deleteSplit(r.id);
+    }
+    await reorderSplits(tempSplits);
     setIsEditMode(false);
+  };
+
+  const handleConfirmDeleteSplit = () => {
+    if (!deleteTargetSplit) return;
+    if (isEditMode) {
+      setTempSplits((prev) =>
+        prev.filter((s) => s.id !== deleteTargetSplit.id),
+      );
+    } else {
+      deleteSplit(deleteTargetSplit.id);
+    }
+    setDeleteTargetSplit(null);
   };
 
   const handleCreateSplit = async (name: string, description?: string) => {
@@ -90,7 +108,7 @@ export default function SplitsScreen() {
     );
 
     return (
-      <View className="bg-white border border-slate-200 rounded-2xl p-4 flex-row items-center justify-between shadow-sm">
+      <View className="bg-white border border-slate-200 rounded-2xl p-4 flex-row items-center justify-between">
         <TouchableOpacity
           disabled={isEditMode}
           activeOpacity={isEditMode ? 1 : 0.75}
@@ -174,7 +192,7 @@ export default function SplitsScreen() {
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={handleLogout}
-            className="flex-row items-center px-3 py-2 rounded-xl bg-white border border-slate-200 shadow-sm"
+            className="flex-row items-center px-3 py-2 rounded-xl bg-white border border-slate-200"
           >
             <Text className="text-slate-700 font-bold text-xs mr-1.5">
               Logout
@@ -292,7 +310,8 @@ export default function SplitsScreen() {
         }}
         onDelete={() => {
           if (editTargetSplit) {
-            setDeleteTargetSplit(editTargetSplit);
+            const splitToDelete = editTargetSplit;
+            setDeleteTargetSplit(splitToDelete);
             setEditTargetSplit(null);
           }
         }}
@@ -304,12 +323,7 @@ export default function SplitsScreen() {
         title={`Delete ${deleteTargetSplit?.name || ""}?`}
         message="Are you sure you want to delete this training split? All workouts and exercises inside will be permanently removed."
         confirmText="Delete Split"
-        onConfirm={() => {
-          if (deleteTargetSplit) {
-            deleteSplit(deleteTargetSplit.id);
-            setDeleteTargetSplit(null);
-          }
-        }}
+        onConfirm={handleConfirmDeleteSplit}
         onCancel={() => setDeleteTargetSplit(null)}
       />
     </SafeAreaView>
