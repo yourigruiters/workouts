@@ -4,8 +4,8 @@ import {
   Edit3,
   AlertTriangle,
   ChevronDown,
+  ChevronUp,
   ChevronRight,
-  GripVertical,
   Trash2,
 } from "lucide-react-native";
 import { ExerciseItem, SetItem } from "../types/workout";
@@ -14,17 +14,23 @@ import { MarqueeText } from "./MarqueeText";
 interface ExerciseCardProps {
   exercise: ExerciseItem;
   onOpenEdit: () => void;
-  dragHandleProps?: any;
   isEditMode?: boolean;
   onDeleteExercise?: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
 }
 
 export const ExerciseCard: React.FC<ExerciseCardProps> = ({
   exercise,
   onOpenEdit,
-  dragHandleProps,
   isEditMode,
   onDeleteExercise,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp = false,
+  canMoveDown = false,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -45,7 +51,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           <View className="mt-1 mr-2">
             {!isEditMode && (
               isExpanded ? (
-                <ChevronDown size={18} color="#475569" />
+                <ChevronDown size={18} color="#2563EB" />
               ) : (
                 <ChevronRight size={18} color="#475569" />
               )
@@ -77,7 +83,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           </View>
         </TouchableOpacity>
 
-        {/* Top Right Actions: In Default Mode: Edit Exercise button; In Edit Mode: Reorder Handle & Delete */}
+        {/* Top Right Actions: In Default Mode: Edit Exercise button; In Edit Mode: Up/Down steppers & Delete */}
         <View className="flex-row items-center ml-2">
           {!isEditMode && (
             <TouchableOpacity
@@ -94,11 +100,31 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
 
           {isEditMode && (
             <>
-              <View
-                {...(dragHandleProps || {})}
-                className="p-2 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200 active:bg-blue-50 cursor-grab active:cursor-grabbing"
-              >
-                <GripVertical size={15} color="#64748B" />
+              {/* 1-Tap Up / Down Stepper for 100% reliable mobile reordering */}
+              <View className="flex-row items-center bg-slate-100 border border-slate-200 rounded-xl overflow-hidden">
+                <TouchableOpacity
+                  activeOpacity={0.6}
+                  disabled={!canMoveUp}
+                  onPress={(e) => {
+                    e.stopPropagation?.();
+                    onMoveUp?.();
+                  }}
+                  className={`p-2 ${canMoveUp ? 'hover:bg-slate-200 active:bg-blue-100' : 'opacity-25'}`}
+                >
+                  <ChevronUp size={15} color={canMoveUp ? '#1E293B' : '#94A3B8'} />
+                </TouchableOpacity>
+                <View className="w-[1px] h-3.5 bg-slate-200" />
+                <TouchableOpacity
+                  activeOpacity={0.6}
+                  disabled={!canMoveDown}
+                  onPress={(e) => {
+                    e.stopPropagation?.();
+                    onMoveDown?.();
+                  }}
+                  className={`p-2 ${canMoveDown ? 'hover:bg-slate-200 active:bg-blue-100' : 'opacity-25'}`}
+                >
+                  <ChevronDown size={15} color={canMoveDown ? '#1E293B' : '#94A3B8'} />
+                </TouchableOpacity>
               </View>
 
               {onDeleteExercise && (

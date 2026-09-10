@@ -11,18 +11,17 @@ import {
   ArrowLeft,
   Plus,
   Calendar,
-  GripVertical,
   Layers,
-  Trash2,
   Edit3,
   Check,
   X,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react-native';
 import { useWorkouts } from '../../src/context/WorkoutContext';
 import { CreateWorkoutModal } from '../../src/components/CreateWorkoutModal';
 import { EditWorkoutModal } from '../../src/components/EditWorkoutModal';
 import { ConfirmDeleteModal } from '../../src/components/ConfirmDeleteModal';
-import { DraggableReorderList } from '../../src/components/DraggableReorderList';
 import { Workout } from '../../src/types/workout';
 
 export default function SplitDetailScreen() {
@@ -79,6 +78,27 @@ export default function SplitDetailScreen() {
       deleteWorkout(deleteTargetWorkout.id);
     }
     setDeleteTargetWorkout(null);
+  };
+
+  const handleMoveWorkout = (fromIndex: number, toIndex: number) => {
+    const list = isEditMode ? tempWorkouts : workouts;
+    if (
+      fromIndex < 0 ||
+      fromIndex >= list.length ||
+      toIndex < 0 ||
+      toIndex >= list.length ||
+      fromIndex === toIndex
+    ) {
+      return;
+    }
+    const updated = [...list];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, moved);
+    if (isEditMode) {
+      setTempWorkouts(updated);
+    } else if (id) {
+      reorderWorkouts(id, updated);
+    }
   };
 
   const handleCreateWorkout = async (name: string, focus?: string) => {
@@ -235,106 +255,118 @@ export default function SplitDetailScreen() {
           Workouts List
         </Text>
 
-        {/* Workouts List Items with Drag & Hold Reordering */}
-        <DraggableReorderList
-          data={isEditMode ? tempWorkouts : workouts}
-          onReorder={
-            isEditMode
-              ? setTempWorkouts
-              : (newWorkouts) => {
-                  if (id) reorderWorkouts(id, newWorkouts);
-                }
-          }
-          renderItem={({ item, dragHandleProps }) => {
-            const exerciseCount = item.exercises?.length || 0;
-            const totalSets = (item.exercises || []).reduce(
-              (sum, ex) => sum + (ex.sets?.length || 0),
-              0
-            );
+        {/* Workouts List Items with 1-Tap Up/Down Reordering */}
+        {currentWorkouts.length === 0 ? (
+          <View className="items-center justify-center py-12 px-4 bg-white border border-dashed border-slate-200 rounded-2xl mb-8">
+            <Layers size={40} color="#94A3B8" />
+            <Text className="text-slate-800 font-bold text-base mt-2.5">
+              No Workouts Added
+            </Text>
+            <Text className="text-slate-400 text-xs text-center mt-1">
+              Tap "Add workout" above to add routines to this split.
+            </Text>
+          </View>
+        ) : (
+          <View style={{ gap: 14 }}>
+            {currentWorkouts.map((item, index) => {
+              const exerciseCount = item.exercises?.length || 0;
+              const totalSets = (item.exercises || []).reduce(
+                (sum, ex) => sum + (ex.sets?.length || 0),
+                0
+              );
+              const canMoveUp = index > 0;
+              const canMoveDown = index < currentWorkouts.length - 1;
 
-            return (
-              <View className="bg-white border border-slate-200 rounded-2xl p-4 flex-row items-center justify-between">
-                <TouchableOpacity
-                  disabled={isEditMode}
-                  activeOpacity={isEditMode ? 1 : 0.75}
-                  onPress={() => {
-                    if (isEditMode) return;
-                    router.push({
-                      pathname: '/workout/[id]',
-                      params: { id: item.id },
-                    });
-                  }}
-                  className={`flex-row items-center flex-1 pr-3 ${
-                    isEditMode ? 'cursor-default' : ''
-                  }`}
+              return (
+                <View
+                  key={item.id}
+                  className="bg-white border border-slate-200 rounded-2xl p-4 flex-row items-center justify-between"
                 >
-                  <View className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 items-center justify-center mr-3.5">
-                    <Calendar size={20} color="#2563EB" />
-                  </View>
+                  <TouchableOpacity
+                    disabled={isEditMode}
+                    activeOpacity={isEditMode ? 1 : 0.75}
+                    onPress={() => {
+                      if (isEditMode) return;
+                      router.push({
+                        pathname: '/workout/[id]',
+                        params: { id: item.id },
+                      });
+                    }}
+                    className={`flex-row items-center flex-1 pr-3 ${
+                      isEditMode ? 'cursor-default' : ''
+                    }`}
+                  >
+                    <View className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 items-center justify-center mr-3.5">
+                      <Calendar size={20} color="#2563EB" />
+                    </View>
 
-                  <View className="flex-1">
-                    {/* Workout Name */}
-                    <Text className="text-slate-900 text-base font-bold tracking-tight">
-                      {item.name}
-                    </Text>
-
-                    {/* Workout Focus Description (Only if provided) */}
-                    {Boolean(item.focus) && (
-                      <Text className="text-slate-500 text-xs font-medium mt-0.5">
-                        {item.focus}
+                    <View className="flex-1">
+                      {/* Workout Name */}
+                      <Text className="text-slate-900 text-base font-bold tracking-tight">
+                        {item.name}
                       </Text>
-                    )}
 
-                    {/* X of Exercises, X of Sets */}
-                    <View className="flex-row items-center mt-2 space-x-2">
-                      <View className="bg-slate-100 px-2.5 py-0.5 rounded-md">
-                        <Text className="text-blue-700 text-xs font-bold">
-                          {exerciseCount} {exerciseCount === 1 ? 'Exercise' : 'Exercises'}
+                      {/* Workout Focus Description (Only if provided) */}
+                      {Boolean(item.focus) && (
+                        <Text className="text-slate-500 text-xs font-medium mt-0.5">
+                          {item.focus}
                         </Text>
-                      </View>
+                      )}
 
-                      <View className="bg-slate-100 px-2.5 py-0.5 rounded-md ml-2">
-                        <Text className="text-emerald-700 text-xs font-bold">
-                          {totalSets} {totalSets === 1 ? 'Set' : 'Sets'}
-                        </Text>
+                      {/* X of Exercises, X of Sets */}
+                      <View className="flex-row items-center mt-2 space-x-2">
+                        <View className="bg-slate-100 px-2.5 py-0.5 rounded-md">
+                          <Text className="text-blue-700 text-xs font-bold">
+                            {exerciseCount} {exerciseCount === 1 ? 'Exercise' : 'Exercises'}
+                          </Text>
+                        </View>
+
+                        <View className="bg-slate-100 px-2.5 py-0.5 rounded-md ml-2">
+                          <Text className="text-emerald-700 text-xs font-bold">
+                            {totalSets} {totalSets === 1 ? 'Set' : 'Sets'}
+                          </Text>
+                        </View>
                       </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
+                  </TouchableOpacity>
 
-                {isEditMode && (
-                  <View className="flex-row items-center">
-                    <View
-                      {...dragHandleProps}
-                      className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 active:bg-blue-50 cursor-grab active:cursor-grabbing"
-                    >
-                      <GripVertical size={20} color="#64748B" />
+                  {isEditMode && (
+                    <View className="flex-row items-center">
+                      {/* 1-Tap Up / Down Stepper for 100% reliable mobile reordering */}
+                      <View className="flex-row items-center bg-slate-100 border border-slate-200 rounded-xl overflow-hidden mr-2">
+                        <TouchableOpacity
+                          activeOpacity={0.6}
+                          disabled={!canMoveUp}
+                          onPress={() => handleMoveWorkout(index, index - 1)}
+                          className={`p-2.5 ${canMoveUp ? 'hover:bg-slate-200 active:bg-blue-100' : 'opacity-25'}`}
+                        >
+                          <ChevronUp size={16} color={canMoveUp ? '#1E293B' : '#94A3B8'} />
+                        </TouchableOpacity>
+                        <View className="w-[1px] h-4 bg-slate-200" />
+                        <TouchableOpacity
+                          activeOpacity={0.6}
+                          disabled={!canMoveDown}
+                          onPress={() => handleMoveWorkout(index, index + 1)}
+                          className={`p-2.5 ${canMoveDown ? 'hover:bg-slate-200 active:bg-blue-100' : 'opacity-25'}`}
+                        >
+                          <ChevronDown size={16} color={canMoveDown ? '#1E293B' : '#94A3B8'} />
+                        </TouchableOpacity>
+                      </View>
+
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => setEditTargetWorkout(item)}
+                        className="p-2.5 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200"
+                      >
+                        <Edit3 size={17} color="#475569" />
+                      </TouchableOpacity>
                     </View>
-
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      onPress={() => setEditTargetWorkout(item)}
-                      className="p-2.5 rounded-xl bg-slate-100 border border-slate-200 ml-2 hover:bg-slate-200"
-                    >
-                      <Edit3 size={18} color="#475569" />
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            );
-          }}
-          ListEmptyComponent={
-            <View className="items-center justify-center py-12 px-4 bg-white border border-dashed border-slate-200 rounded-2xl mb-8">
-              <Layers size={40} color="#94A3B8" />
-              <Text className="text-slate-800 font-bold text-base mt-2.5">
-                No Workouts Added
-              </Text>
-              <Text className="text-slate-400 text-xs text-center mt-1">
-                Tap "Add workout" above to add routines to this split.
-              </Text>
-            </View>
-          }
-        />
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
 
       {/* 1-Input Create Workout Modal */}

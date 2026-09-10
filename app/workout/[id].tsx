@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   Plus,
   Layers,
-  Trash2,
   Edit3,
   Check,
   X,
@@ -19,7 +18,6 @@ import { AddExerciseModal } from "../../src/components/AddExerciseModal";
 import { AddHeadingModal } from "../../src/components/AddHeadingModal";
 import { EditGroupModal } from "../../src/components/EditGroupModal";
 import { ConfirmDeleteModal } from "../../src/components/ConfirmDeleteModal";
-import { DraggableReorderList } from "../../src/components/DraggableReorderList";
 import { ExerciseItem, SectionHeading } from "../../src/types/workout";
 
 export default function WorkoutDetailScreen() {
@@ -163,15 +161,30 @@ export default function WorkoutDetailScreen() {
     (ex) => !ex.headingId,
   );
 
-  const handleReorderGroupExercises = (
+  const handleMoveExerciseWithinGroup = (
     headingId: string,
-    reorderedGroupExercises: ExerciseItem[],
+    fromIndex: number,
+    toIndex: number,
   ) => {
-    let groupIdx = 0;
     const baseList = isEditMode ? tempExercises : workout.exercises || [];
+    const groupExercises = baseList.filter((ex) => ex.headingId === headingId);
+    if (
+      fromIndex < 0 ||
+      fromIndex >= groupExercises.length ||
+      toIndex < 0 ||
+      toIndex >= groupExercises.length ||
+      fromIndex === toIndex
+    ) {
+      return;
+    }
+    const reorderedGroup = [...groupExercises];
+    const [moved] = reorderedGroup.splice(fromIndex, 1);
+    reorderedGroup.splice(toIndex, 0, moved);
+
+    let groupIdx = 0;
     const newExercises = baseList.map((ex) => {
       if (ex.headingId === headingId) {
-        const next = reorderedGroupExercises[groupIdx];
+        const next = reorderedGroup[groupIdx];
         groupIdx++;
         return next || ex;
       }
@@ -185,14 +198,26 @@ export default function WorkoutDetailScreen() {
     }
   };
 
-  const handleReorderTopLevelExercises = (
-    reorderedTopLevel: ExerciseItem[],
-  ) => {
-    let topIdx = 0;
+  const handleMoveTopLevelExercise = (fromIndex: number, toIndex: number) => {
     const baseList = isEditMode ? tempExercises : workout.exercises || [];
+    const topExercises = baseList.filter((ex) => !ex.headingId);
+    if (
+      fromIndex < 0 ||
+      fromIndex >= topExercises.length ||
+      toIndex < 0 ||
+      toIndex >= topExercises.length ||
+      fromIndex === toIndex
+    ) {
+      return;
+    }
+    const reorderedTop = [...topExercises];
+    const [moved] = reorderedTop.splice(fromIndex, 1);
+    reorderedTop.splice(toIndex, 0, moved);
+
+    let topIdx = 0;
     const newExercises = baseList.map((ex) => {
       if (!ex.headingId) {
-        const next = reorderedTopLevel[topIdx];
+        const next = reorderedTop[topIdx];
         topIdx++;
         return next || ex;
       }
@@ -203,6 +228,24 @@ export default function WorkoutDetailScreen() {
       setTempExercises(newExercises);
     } else {
       reorderExercises(workout.id, newExercises);
+    }
+  };
+
+  const handleMoveGroup = (fromIndex: number, toIndex: number) => {
+    if (
+      fromIndex < 0 ||
+      fromIndex >= headings.length ||
+      toIndex < 0 ||
+      toIndex >= headings.length ||
+      fromIndex === toIndex
+    ) {
+      return;
+    }
+    const updated = [...headings];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, moved);
+    if (isEditMode) {
+      setTempHeadings(updated);
     }
   };
 
@@ -330,23 +373,25 @@ export default function WorkoutDetailScreen() {
 
         {/* Fallback top level exercises */}
         {topLevelExercises.length > 0 && (
-          <DraggableReorderList
-            data={topLevelExercises}
-            onReorder={handleReorderTopLevelExercises}
-            renderItem={({ item: exercise, dragHandleProps }) => (
+          <View style={{ gap: 12 }} className="mb-4">
+            {topLevelExercises.map((exercise, exIndex) => (
               <ExerciseCard
+                key={exercise.id}
                 exercise={exercise}
-                dragHandleProps={dragHandleProps}
                 isEditMode={isEditMode}
                 onDeleteExercise={() => setDeleteTargetExercise(exercise)}
                 onOpenEdit={() => setEditModalExercise(exercise)}
+                onMoveUp={() => handleMoveTopLevelExercise(exIndex, exIndex - 1)}
+                onMoveDown={() => handleMoveTopLevelExercise(exIndex, exIndex + 1)}
+                canMoveUp={exIndex > 0}
+                canMoveDown={exIndex < topLevelExercises.length - 1}
               />
-            )}
-          />
+            ))}
+          </View>
         )}
 
         {/* Categorized Groups with Nested Exercise Cards */}
-        {headings.map((heading) => {
+        {headings.map((heading, hIdx) => {
           const sectionExercises = currentExercises.filter(
             (ex) => ex.headingId === heading.id,
           );
@@ -371,22 +416,26 @@ export default function WorkoutDetailScreen() {
               onEditGroup={
                 isEditMode ? () => setEditGroupTarget(heading) : undefined
               }
+              onMoveUp={isEditMode && headings.length > 1 ? () => handleMoveGroup(hIdx, hIdx - 1) : undefined}
+              onMoveDown={isEditMode && headings.length > 1 ? () => handleMoveGroup(hIdx, hIdx + 1) : undefined}
+              canMoveUp={hIdx > 0}
+              canMoveDown={hIdx < headings.length - 1}
             >
-              <DraggableReorderList
-                data={sectionExercises}
-                onReorder={(reordered) =>
-                  handleReorderGroupExercises(heading.id, reordered)
-                }
-                renderItem={({ item: exercise, dragHandleProps }) => (
+              <View style={{ gap: 12 }}>
+                {sectionExercises.map((exercise, exIndex) => (
                   <ExerciseCard
+                    key={exercise.id}
                     exercise={exercise}
-                    dragHandleProps={dragHandleProps}
                     isEditMode={isEditMode}
                     onDeleteExercise={() => setDeleteTargetExercise(exercise)}
                     onOpenEdit={() => setEditModalExercise(exercise)}
+                    onMoveUp={() => handleMoveExerciseWithinGroup(heading.id, exIndex, exIndex - 1)}
+                    onMoveDown={() => handleMoveExerciseWithinGroup(heading.id, exIndex, exIndex + 1)}
+                    canMoveUp={exIndex > 0}
+                    canMoveDown={exIndex < sectionExercises.length - 1}
                   />
-                )}
-              />
+                ))}
+              </View>
             </GroupSection>
           );
         })}

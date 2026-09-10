@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { ChevronDown, ChevronRight, Edit3 } from 'lucide-react-native';
+import { ChevronDown, ChevronUp, ChevronRight, Edit3 } from 'lucide-react-native';
 import { SectionHeading } from '../types/workout';
 
 interface GroupSectionProps {
@@ -9,6 +9,10 @@ interface GroupSectionProps {
   setCount: number;
   onToggleCollapse: () => void;
   onEditGroup?: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
   children?: React.ReactNode;
 }
 
@@ -95,6 +99,10 @@ export const GroupSection: React.FC<GroupSectionProps> = ({
   setCount,
   onToggleCollapse,
   onEditGroup,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp = false,
+  canMoveDown = false,
   children,
 }) => {
   const theme = GROUP_COLOR_MAP[heading.color] || GROUP_COLOR_MAP.blue;
@@ -131,6 +139,33 @@ export const GroupSection: React.FC<GroupSectionProps> = ({
               {exerciseCount} Excs • {setCount} {setCount === 1 ? 'Set' : 'Sets'}
             </Text>
           </View>
+
+          {/* Reorder Group Steppers in Edit Mode */}
+          {onMoveUp && onMoveDown && (
+            <View className="flex-row items-center bg-white/70 border border-slate-200/60 rounded-lg overflow-hidden ml-1">
+              <TouchableOpacity
+                disabled={!canMoveUp}
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  onMoveUp();
+                }}
+                className={`p-1.5 ${canMoveUp ? 'active:bg-white' : 'opacity-25'}`}
+              >
+                <ChevronUp size={14} color={canMoveUp ? '#1E293B' : '#94A3B8'} />
+              </TouchableOpacity>
+              <View className="w-[1px] h-3 bg-slate-200" />
+              <TouchableOpacity
+                disabled={!canMoveDown}
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  onMoveDown();
+                }}
+                className={`p-1.5 ${canMoveDown ? 'active:bg-white' : 'opacity-25'}`}
+              >
+                <ChevronDown size={14} color={canMoveDown ? '#1E293B' : '#94A3B8'} />
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Change / Edit Group Icon */}
           {onEditGroup && (

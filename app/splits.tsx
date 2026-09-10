@@ -11,20 +11,19 @@ import { useRouter } from "expo-router";
 import {
   Plus,
   Dumbbell,
-  GripVertical,
   LogOut,
   Layers,
   Edit3,
   Check,
-  Trash2,
   X,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react-native";
 import { useWorkouts } from "../src/context/WorkoutContext";
 import { useAuth } from "../src/context/AuthContext";
 import { CreateSplitModal } from "../src/components/CreateSplitModal";
 import { EditSplitModal } from "../src/components/EditSplitModal";
 import { ConfirmDeleteModal } from "../src/components/ConfirmDeleteModal";
-import { DraggableReorderList } from "../src/components/DraggableReorderList";
 import { TrainingSplit } from "../src/types/workout";
 
 export default function SplitsScreen() {
@@ -81,6 +80,27 @@ export default function SplitsScreen() {
     setDeleteTargetSplit(null);
   };
 
+  const handleMoveSplit = (fromIndex: number, toIndex: number) => {
+    const list = isEditMode ? tempSplits : splits;
+    if (
+      fromIndex < 0 ||
+      fromIndex >= list.length ||
+      toIndex < 0 ||
+      toIndex >= list.length ||
+      fromIndex === toIndex
+    ) {
+      return;
+    }
+    const updated = [...list];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, moved);
+    if (isEditMode) {
+      setTempSplits(updated);
+    } else {
+      reorderSplits(updated);
+    }
+  };
+
   const handleCreateSplit = async (name: string, description?: string) => {
     const newSplit = await createSplit(name, description);
     router.push({
@@ -94,86 +114,7 @@ export default function SplitsScreen() {
     router.replace("/");
   };
 
-  const renderSplitItem = ({
-    item,
-    dragHandleProps,
-  }: {
-    item: TrainingSplit;
-    dragHandleProps: any;
-  }) => {
-    const splitWorkouts = workouts.filter((w) => w.splitId === item.id);
-    const totalExercises = splitWorkouts.reduce(
-      (acc, w) => acc + (w.exercises?.length || 0),
-      0,
-    );
-
-    return (
-      <View className="bg-white border border-slate-200 rounded-2xl p-4 flex-row items-center justify-between">
-        <TouchableOpacity
-          disabled={isEditMode}
-          activeOpacity={isEditMode ? 1 : 0.75}
-          onPress={() => {
-            if (isEditMode) return;
-            router.push({
-              pathname: "/split/[id]",
-              params: { id: item.id },
-            });
-          }}
-          className={`flex-row items-center flex-1 pr-3 ${
-            isEditMode ? "cursor-default" : ""
-          }`}
-        >
-          <View className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 items-center justify-center mr-4">
-            <Dumbbell size={22} color="#2563EB" />
-          </View>
-
-          <View className="flex-1">
-            <Text className="text-slate-900 text-base font-bold tracking-tight">
-              {item.name}
-            </Text>
-            {Boolean(item.description) && (
-              <Text
-                className="text-slate-500 text-xs font-medium mt-0.5"
-                numberOfLines={1}
-              >
-                {item.description}
-              </Text>
-            )}
-            <View className="flex-row items-center mt-1 space-x-2">
-              <Text className="text-blue-600 text-xs font-semibold">
-                {splitWorkouts.length}{" "}
-                {splitWorkouts.length === 1 ? "Workout" : "Workouts"}
-              </Text>
-              <Text className="text-slate-300 text-xs">•</Text>
-              <Text className="text-slate-500 text-xs font-medium">
-                {totalExercises} Exercises
-              </Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-
-        {isEditMode && (
-          <View className="flex-row items-center">
-            <View
-              {...dragHandleProps}
-              className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 active:bg-blue-50 cursor-grab active:cursor-grabbing"
-            >
-              <GripVertical size={20} color="#64748B" />
-            </View>
-
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => setEditTargetSplit(item)}
-              className="p-2.5 rounded-xl bg-slate-100 border border-slate-200 ml-2 hover:bg-slate-200"
-            >
-              <Edit3 size={18} color="#475569" />
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    );
-  };
-
+  const currentSplits = isEditMode ? tempSplits : splits;
   const userGreeting =
     user?.displayName || user?.email?.split("@")[0] || "Athlete";
 
@@ -269,25 +210,127 @@ export default function SplitsScreen() {
           <View className="py-16 items-center justify-center">
             <ActivityIndicator size="large" color="#2563EB" />
           </View>
+        ) : currentSplits.length === 0 ? (
+          <View className="items-center justify-center py-16 px-4 bg-white border border-dashed border-slate-200 rounded-3xl mt-2">
+            <Layers size={44} color="#94A3B8" />
+            <Text className="text-slate-800 font-bold text-base mt-3">
+              No Training Splits Yet
+            </Text>
+            <Text className="text-slate-400 text-xs text-center mt-1 mb-4">
+              Tap "Add split" above to create your first training split.
+            </Text>
+          </View>
         ) : (
-          <DraggableReorderList
-            data={isEditMode ? tempSplits : splits}
-            onReorder={isEditMode ? setTempSplits : reorderSplits}
-            renderItem={({ item, dragHandleProps }) =>
-              renderSplitItem({ item, dragHandleProps })
-            }
-            ListEmptyComponent={
-              <View className="items-center justify-center py-16 px-4 bg-white border border-dashed border-slate-200 rounded-3xl mt-2">
-                <Layers size={44} color="#94A3B8" />
-                <Text className="text-slate-800 font-bold text-base mt-3">
-                  No Training Splits Yet
-                </Text>
-                <Text className="text-slate-400 text-xs text-center mt-1 mb-4">
-                  Tap "Add split" above to create your first training split.
-                </Text>
-              </View>
-            }
-          />
+          <View style={{ gap: 14 }}>
+            {currentSplits.map((item, index) => {
+              const splitWorkouts = workouts.filter(
+                (w) => w.splitId === item.id,
+              );
+              const totalExercises = splitWorkouts.reduce(
+                (acc, w) => acc + (w.exercises?.length || 0),
+                0,
+              );
+              const canMoveUp = index > 0;
+              const canMoveDown = index < currentSplits.length - 1;
+
+              return (
+                <View
+                  key={item.id}
+                  className="bg-white border border-slate-200 rounded-2xl p-4 flex-row items-center justify-between"
+                >
+                  <TouchableOpacity
+                    disabled={isEditMode}
+                    activeOpacity={isEditMode ? 1 : 0.75}
+                    onPress={() => {
+                      if (isEditMode) return;
+                      router.push({
+                        pathname: "/split/[id]",
+                        params: { id: item.id },
+                      });
+                    }}
+                    className={`flex-row items-center flex-1 pr-3 ${
+                      isEditMode ? "cursor-default" : ""
+                    }`}
+                  >
+                    <View className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 items-center justify-center mr-4">
+                      <Dumbbell size={22} color="#2563EB" />
+                    </View>
+
+                    <View className="flex-1">
+                      <Text className="text-slate-900 text-base font-bold tracking-tight">
+                        {item.name}
+                      </Text>
+                      {Boolean(item.description) && (
+                        <Text
+                          className="text-slate-500 text-xs font-medium mt-0.5"
+                          numberOfLines={1}
+                        >
+                          {item.description}
+                        </Text>
+                      )}
+                      <View className="flex-row items-center mt-1 space-x-2">
+                        <Text className="text-blue-600 text-xs font-semibold">
+                          {splitWorkouts.length}{" "}
+                          {splitWorkouts.length === 1 ? "Workout" : "Workouts"}
+                        </Text>
+                        <Text className="text-slate-300 text-xs">•</Text>
+                        <Text className="text-slate-500 text-xs font-medium">
+                          {totalExercises} Exercises
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+
+                  {isEditMode && (
+                    <View className="flex-row items-center">
+                      {/* 1-Tap Up / Down Stepper for 100% reliable mobile reordering */}
+                      <View className="flex-row items-center bg-slate-100 border border-slate-200 rounded-xl overflow-hidden mr-2">
+                        <TouchableOpacity
+                          activeOpacity={0.6}
+                          disabled={!canMoveUp}
+                          onPress={() => handleMoveSplit(index, index - 1)}
+                          className={`p-2.5 ${
+                            canMoveUp
+                              ? "hover:bg-slate-200 active:bg-blue-100"
+                              : "opacity-25"
+                          }`}
+                        >
+                          <ChevronUp
+                            size={16}
+                            color={canMoveUp ? "#1E293B" : "#94A3B8"}
+                          />
+                        </TouchableOpacity>
+                        <View className="w-[1px] h-4 bg-slate-200" />
+                        <TouchableOpacity
+                          activeOpacity={0.6}
+                          disabled={!canMoveDown}
+                          onPress={() => handleMoveSplit(index, index + 1)}
+                          className={`p-2.5 ${
+                            canMoveDown
+                              ? "hover:bg-slate-200 active:bg-blue-100"
+                              : "opacity-25"
+                          }`}
+                        >
+                          <ChevronDown
+                            size={16}
+                            color={canMoveDown ? "#1E293B" : "#94A3B8"}
+                          />
+                        </TouchableOpacity>
+                      </View>
+
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => setEditTargetSplit(item)}
+                        className="p-2.5 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200"
+                      >
+                        <Edit3 size={17} color="#475569" />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </View>
         )}
       </ScrollView>
 
