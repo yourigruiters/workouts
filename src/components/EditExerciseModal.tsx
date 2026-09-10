@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Switch,
+  Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import {
   X,
@@ -146,7 +148,10 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View className="flex-1 justify-end bg-black/40">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        className="flex-1 justify-end bg-black/40"
+      >
         <View className="bg-white border-t border-slate-200 rounded-t-3xl p-6 max-h-[90%] shadow-2xl">
           {/* Header */}
           <View className="flex-row items-center justify-between pb-3.5 border-b border-slate-100">
@@ -161,7 +166,7 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView className="mt-4" showsVerticalScrollIndicator={false}>
+          <ScrollView className="mt-4" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             {/* Group Selection */}
             {headings.length > 0 && (
               <View className="mb-4">
@@ -205,7 +210,19 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                 onChangeText={setName}
                 placeholder="e.g. Incline Dumbbell Press"
                 placeholderTextColor="#94A3B8"
-                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
+                autoCapitalize="sentences"
+                style={[
+                  {
+                    height: 48,
+                    fontSize: 15,
+                    paddingVertical: 0,
+                    paddingHorizontal: 16,
+                    textAlignVertical: "center",
+                    includeFontPadding: false,
+                  },
+                  Platform.OS === "web" ? ({ outline: "none" } as any) : undefined,
+                ]}
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl font-semibold"
               />
             </View>
 
@@ -222,7 +239,19 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                 onChangeText={setMachineDetails}
                 placeholder="e.g. Small bench, stack 3"
                 placeholderTextColor="#94A3B8"
-                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
+                autoCapitalize="sentences"
+                style={[
+                  {
+                    height: 48,
+                    fontSize: 15,
+                    paddingVertical: 0,
+                    paddingHorizontal: 16,
+                    textAlignVertical: "center",
+                    includeFontPadding: false,
+                  },
+                  Platform.OS === "web" ? ({ outline: "none" } as any) : undefined,
+                ]}
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl font-semibold"
               />
             </View>
 
@@ -236,7 +265,19 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                 onChangeText={setDetails}
                 placeholder="e.g. Rope attachment"
                 placeholderTextColor="#94A3B8"
-                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 font-semibold text-sm"
+                autoCapitalize="sentences"
+                style={[
+                  {
+                    height: 48,
+                    fontSize: 15,
+                    paddingVertical: 0,
+                    paddingHorizontal: 16,
+                    textAlignVertical: "center",
+                    includeFontPadding: false,
+                  },
+                  Platform.OS === "web" ? ({ outline: "none" } as any) : undefined,
+                ]}
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl font-semibold"
               />
             </View>
 
@@ -255,7 +296,19 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                 numberOfLines={2}
                 placeholder="Important cue or form reminder..."
                 placeholderTextColor="#94A3B8"
-                className="bg-amber-50 border border-amber-300 text-amber-900 rounded-xl px-4 py-2.5 font-medium text-sm"
+                autoCapitalize="sentences"
+                style={[
+                  {
+                    minHeight: 56,
+                    fontSize: 14,
+                    paddingVertical: 8,
+                    paddingHorizontal: 14,
+                    textAlignVertical: "top",
+                    includeFontPadding: false,
+                  },
+                  Platform.OS === "web" ? ({ outline: "none" } as any) : undefined,
+                ]}
+                className="bg-amber-50 border border-amber-300 text-amber-900 rounded-xl font-medium"
               />
             </View>
 
@@ -360,7 +413,7 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                       return (
                         <View
                           key={s.id}
-                          className="flex-row items-center bg-white border border-slate-200 rounded-xl p-2 my-0.5 shadow-2xs"
+                          className="flex-row items-center bg-white border border-slate-200 rounded-xl p-2 my-0.5 shadow-xs"
                         >
                           {/* Type toggle pill */}
                           <TouchableOpacity
@@ -395,7 +448,19 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                               }
                               placeholder="8-10"
                               placeholderTextColor="#94A3B8"
-                              className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 text-center"
+                              autoCapitalize="sentences"
+                              style={[
+                                {
+                                  height: 38,
+                                  fontSize: 13,
+                                  paddingVertical: 0,
+                                  paddingHorizontal: 6,
+                                  textAlignVertical: "center",
+                                  includeFontPadding: false,
+                                },
+                                Platform.OS === "web" ? ({ outline: "none" } as any) : undefined,
+                              ]}
+                              className="bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-800 text-center"
                             />
                           </View>
 
@@ -417,7 +482,18 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                               placeholder="kg"
                               placeholderTextColor="#94A3B8"
                               keyboardType="numeric"
-                              className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 text-center"
+                              style={[
+                                {
+                                  height: 38,
+                                  fontSize: 13,
+                                  paddingVertical: 0,
+                                  paddingHorizontal: 6,
+                                  textAlignVertical: "center",
+                                  includeFontPadding: false,
+                                },
+                                Platform.OS === "web" ? ({ outline: "none" } as any) : undefined,
+                              ]}
+                              className="bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-800 text-center"
                             />
                           </View>
 
@@ -430,7 +506,18 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
                               }
                               placeholder="1:30"
                               placeholderTextColor="#94A3B8"
-                              className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-medium text-slate-700 text-center"
+                              style={[
+                                {
+                                  height: 38,
+                                  fontSize: 13,
+                                  paddingVertical: 0,
+                                  paddingHorizontal: 6,
+                                  textAlignVertical: "center",
+                                  includeFontPadding: false,
+                                },
+                                Platform.OS === "web" ? ({ outline: "none" } as any) : undefined,
+                              ]}
+                              className="bg-slate-50 border border-slate-200 rounded-lg font-medium text-slate-700 text-center"
                             />
                           </View>
 
@@ -479,7 +566,7 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
             </View>
           </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

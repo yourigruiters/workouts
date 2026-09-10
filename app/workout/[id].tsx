@@ -9,6 +9,7 @@ import {
   Trash2,
   Edit3,
   Check,
+  X,
 } from "lucide-react-native";
 import { useWorkouts } from "../../src/context/WorkoutContext";
 import { GroupSection } from "../../src/components/GroupSection";
@@ -39,6 +40,9 @@ export default function WorkoutDetailScreen() {
 
   // Edit Mode State
   const [isEditMode, setIsEditMode] = useState(false);
+  const [tempExercises, setTempExercises] = useState<ExerciseItem[]>(
+    workout?.exercises || [],
+  );
 
   // Group Collapsed / Expanded State (Always starts completely closed)
   const [expandedHeadingIds, setExpandedHeadingIds] = useState<
@@ -62,6 +66,23 @@ export default function WorkoutDetailScreen() {
   const [deleteGroupTarget, setDeleteGroupTarget] =
     useState<SectionHeading | null>(null);
 
+  const handleStartEdit = () => {
+    setTempExercises(workout?.exercises || []);
+    setIsEditMode(true);
+  };
+
+  const handleCancelEdit = () => {
+    setTempExercises(workout?.exercises || []);
+    setIsEditMode(false);
+  };
+
+  const handleSaveEdit = () => {
+    if (workout) {
+      reorderExercises(workout.id, tempExercises);
+    }
+    setIsEditMode(false);
+  };
+
   if (!workout) {
     return (
       <SafeAreaView className="flex-1 bg-slate-50 items-center justify-center p-6">
@@ -81,8 +102,12 @@ export default function WorkoutDetailScreen() {
   const headings = workout.headings || [];
   const hasGroups = headings.length > 0;
 
-  const totalExercises = workout.exercises?.length || 0;
-  const totalSets = (workout.exercises || []).reduce(
+  const currentExercises = isEditMode
+    ? tempExercises
+    : workout.exercises || [];
+
+  const totalExercises = currentExercises.length;
+  const totalSets = currentExercises.reduce(
     (sum, ex) => sum + (ex.sets?.length || 0),
     0,
   );
@@ -102,7 +127,7 @@ export default function WorkoutDetailScreen() {
   };
 
   // Fallback top level exercises
-  const topLevelExercises = (workout.exercises || []).filter(
+  const topLevelExercises = currentExercises.filter(
     (ex) => !ex.headingId,
   );
 
@@ -110,9 +135,9 @@ export default function WorkoutDetailScreen() {
     headingId: string,
     reorderedGroupExercises: ExerciseItem[],
   ) => {
-    if (!workout) return;
     let groupIdx = 0;
-    const newExercises = (workout.exercises || []).map((ex) => {
+    const baseList = isEditMode ? tempExercises : workout.exercises || [];
+    const newExercises = baseList.map((ex) => {
       if (ex.headingId === headingId) {
         const next = reorderedGroupExercises[groupIdx];
         groupIdx++;
@@ -120,15 +145,20 @@ export default function WorkoutDetailScreen() {
       }
       return ex;
     });
-    reorderExercises(workout.id, newExercises);
+
+    if (isEditMode) {
+      setTempExercises(newExercises);
+    } else {
+      reorderExercises(workout.id, newExercises);
+    }
   };
 
   const handleReorderTopLevelExercises = (
     reorderedTopLevel: ExerciseItem[],
   ) => {
-    if (!workout) return;
     let topIdx = 0;
-    const newExercises = (workout.exercises || []).map((ex) => {
+    const baseList = isEditMode ? tempExercises : workout.exercises || [];
+    const newExercises = baseList.map((ex) => {
       if (!ex.headingId) {
         const next = reorderedTopLevel[topIdx];
         topIdx++;
@@ -136,7 +166,12 @@ export default function WorkoutDetailScreen() {
       }
       return ex;
     });
-    reorderExercises(workout.id, newExercises);
+
+    if (isEditMode) {
+      setTempExercises(newExercises);
+    } else {
+      reorderExercises(workout.id, newExercises);
+    }
   };
 
   return (
@@ -193,34 +228,49 @@ export default function WorkoutDetailScreen() {
           </View>
         </View>
 
-        {/* 3. Action Buttons (Add Exercise, Add group, and Yellow Edit Button) */}
+        {/* 3. Action Buttons (Add Exercise & Add group, or Cancel in Edit Mode, and Yellow Edit/Done Button) */}
         <View className="flex-row items-center mb-5">
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={handleAddExerciseClick}
-            className="flex-1 bg-blue-600 py-3.5 rounded-xl flex-row items-center justify-center shadow-sm mr-2"
-          >
-            <Plus size={17} color="#FFFFFF" />
-            <Text className="text-white font-bold text-sm ml-1.5">
-              Add Exercise
-            </Text>
-          </TouchableOpacity>
+          {isEditMode ? (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handleCancelEdit}
+              className="flex-1 bg-slate-200 border border-slate-300 py-3.5 rounded-xl flex-row items-center justify-center mr-2"
+            >
+              <X size={17} color="#475569" />
+              <Text className="text-slate-800 font-bold text-sm ml-1.5">
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={handleAddExerciseClick}
+                className="flex-1 bg-blue-600 py-3.5 rounded-xl flex-row items-center justify-center mr-2"
+              >
+                <Plus size={17} color="#FFFFFF" />
+                <Text className="text-white font-bold text-sm ml-1.5">
+                  Add Exercise
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setAddGroupVisible(true)}
+                className="bg-white border border-slate-200 px-3.5 py-3.5 rounded-xl flex-row items-center justify-center mr-2"
+              >
+                <Layers size={17} color="#475569" />
+                <Text className="text-slate-700 font-bold text-sm ml-1.5">
+                  Add group
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
 
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => setAddGroupVisible(true)}
-            className="bg-white border border-slate-200 px-3.5 py-3.5 rounded-xl flex-row items-center justify-center shadow-sm mr-2"
-          >
-            <Layers size={17} color="#475569" />
-            <Text className="text-slate-700 font-bold text-sm ml-1.5">
-              Add group
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setIsEditMode(!isEditMode)}
-            className={`px-3.5 py-3.5 rounded-xl flex-row items-center justify-center border shadow-sm ${
+            onPress={isEditMode ? handleSaveEdit : handleStartEdit}
+            className={`px-4 py-3.5 rounded-xl flex-row items-center justify-center border ${
               isEditMode
                 ? "bg-amber-400/30 border-amber-500/60"
                 : "bg-amber-100/70 border-amber-300/80 hover:bg-amber-200/80"
@@ -265,7 +315,7 @@ export default function WorkoutDetailScreen() {
 
         {/* Categorized Groups with Nested Exercise Cards */}
         {headings.map((heading) => {
-          const sectionExercises = (workout.exercises || []).filter(
+          const sectionExercises = currentExercises.filter(
             (ex) => ex.headingId === heading.id,
           );
           const sectionSetCount = sectionExercises.reduce(

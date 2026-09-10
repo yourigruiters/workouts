@@ -17,6 +17,7 @@ import {
   Edit3,
   Check,
   Trash2,
+  X,
 } from "lucide-react-native";
 import { useWorkouts } from "../src/context/WorkoutContext";
 import { useAuth } from "../src/context/AuthContext";
@@ -40,11 +41,27 @@ export default function SplitsScreen() {
   const { user, logout } = useAuth();
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [tempSplits, setTempSplits] = useState<TrainingSplit[]>(splits);
   const [editTargetSplit, setEditTargetSplit] = useState<TrainingSplit | null>(
     null,
   );
   const [deleteTargetSplit, setDeleteTargetSplit] =
     useState<TrainingSplit | null>(null);
+
+  const handleStartEdit = () => {
+    setTempSplits(splits);
+    setIsEditMode(true);
+  };
+
+  const handleCancelEdit = () => {
+    setTempSplits(splits);
+    setIsEditMode(false);
+  };
+
+  const handleSaveEdit = () => {
+    reorderSplits(tempSplits);
+    setIsEditMode(false);
+  };
 
   const handleCreateSplit = async (name: string, description?: string) => {
     const newSplit = await createSplit(name, description);
@@ -176,21 +193,36 @@ export default function SplitsScreen() {
           </Text>
         </View>
 
-        {/* Action Buttons: Add split & Yellow Edit Mode Button */}
+        {/* Action Buttons: Add split (or Cancel in edit mode) & Edit/Done Button */}
         <View className="flex-row items-center mb-5">
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setCreateModalVisible(true)}
-            className="flex-1 bg-blue-600 py-3.5 px-4 rounded-xl flex-row items-center justify-center shadow-sm mr-2.5"
-          >
-            <Plus size={18} color="#FFFFFF" />
-            <Text className="text-white font-bold text-sm ml-2">Add split</Text>
-          </TouchableOpacity>
+          {isEditMode ? (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handleCancelEdit}
+              className="flex-1 bg-slate-200 border border-slate-300 py-3.5 px-4 rounded-xl flex-row items-center justify-center mr-2.5"
+            >
+              <X size={17} color="#475569" />
+              <Text className="text-slate-800 font-bold text-sm ml-1.5">
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setCreateModalVisible(true)}
+              className="flex-1 bg-blue-600 py-3.5 px-4 rounded-xl flex-row items-center justify-center mr-2.5"
+            >
+              <Plus size={18} color="#FFFFFF" />
+              <Text className="text-white font-bold text-sm ml-2">
+                Add split
+              </Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => setIsEditMode(!isEditMode)}
-            className={`px-4 py-3.5 rounded-xl flex-row items-center justify-center border shadow-sm ${
+            onPress={isEditMode ? handleSaveEdit : handleStartEdit}
+            className={`px-4 py-3.5 rounded-xl flex-row items-center justify-center border ${
               isEditMode
                 ? "bg-amber-400/30 border-amber-500/60"
                 : "bg-amber-100/70 border-amber-300/80 hover:bg-amber-200/80"
@@ -221,8 +253,8 @@ export default function SplitsScreen() {
           </View>
         ) : (
           <DraggableReorderList
-            data={splits}
-            onReorder={reorderSplits}
+            data={isEditMode ? tempSplits : splits}
+            onReorder={isEditMode ? setTempSplits : reorderSplits}
             renderItem={({ item, dragHandleProps }) =>
               renderSplitItem({ item, dragHandleProps })
             }

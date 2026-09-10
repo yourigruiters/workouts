@@ -16,6 +16,7 @@ import {
   Trash2,
   Edit3,
   Check,
+  X,
 } from 'lucide-react-native';
 import { useWorkouts } from '../../src/context/WorkoutContext';
 import { CreateWorkoutModal } from '../../src/components/CreateWorkoutModal';
@@ -43,6 +44,24 @@ export default function SplitDetailScreen() {
 
   const split = getSplitById(id || '');
   const workouts = getWorkoutsForSplit(id || '');
+  const [tempWorkouts, setTempWorkouts] = useState<Workout[]>(workouts);
+
+  const handleStartEdit = () => {
+    setTempWorkouts(workouts);
+    setIsEditMode(true);
+  };
+
+  const handleCancelEdit = () => {
+    setTempWorkouts(workouts);
+    setIsEditMode(false);
+  };
+
+  const handleSaveEdit = () => {
+    if (id) {
+      reorderWorkouts(id, tempWorkouts);
+    }
+    setIsEditMode(false);
+  };
 
   const handleCreateWorkout = async (name: string, focus?: string) => {
     if (!id) return;
@@ -138,23 +157,36 @@ export default function SplitDetailScreen() {
           </View>
         </View>
 
-        {/* Action Buttons: Add Workout & Yellow Edit Mode Button */}
+        {/* Action Buttons: Add Workout (or Cancel in edit mode) & Yellow Edit Mode Button */}
         <View className="flex-row items-center mb-5">
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setCreateModalVisible(true)}
-            className="flex-1 bg-blue-600 py-3.5 px-4 rounded-xl flex-row items-center justify-center shadow-sm mr-2.5"
-          >
-            <Plus size={18} color="#FFFFFF" />
-            <Text className="text-white font-bold text-sm ml-2">
-              Add workout
-            </Text>
-          </TouchableOpacity>
+          {isEditMode ? (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handleCancelEdit}
+              className="flex-1 bg-slate-200 border border-slate-300 py-3.5 px-4 rounded-xl flex-row items-center justify-center mr-2.5"
+            >
+              <X size={17} color="#475569" />
+              <Text className="text-slate-800 font-bold text-sm ml-1.5">
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setCreateModalVisible(true)}
+              className="flex-1 bg-blue-600 py-3.5 px-4 rounded-xl flex-row items-center justify-center mr-2.5"
+            >
+              <Plus size={18} color="#FFFFFF" />
+              <Text className="text-white font-bold text-sm ml-2">
+                Add workout
+              </Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => setIsEditMode(!isEditMode)}
-            className={`px-4 py-3.5 rounded-xl flex-row items-center justify-center border shadow-sm ${
+            onPress={isEditMode ? handleSaveEdit : handleStartEdit}
+            className={`px-4 py-3.5 rounded-xl flex-row items-center justify-center border ${
               isEditMode
                 ? 'bg-amber-400/30 border-amber-500/60'
                 : 'bg-amber-100/70 border-amber-300/80 hover:bg-amber-200/80'
@@ -185,10 +217,14 @@ export default function SplitDetailScreen() {
 
         {/* Workouts List Items with Drag & Hold Reordering */}
         <DraggableReorderList
-          data={workouts}
-          onReorder={(newWorkouts) => {
-            if (id) reorderWorkouts(id, newWorkouts);
-          }}
+          data={isEditMode ? tempWorkouts : workouts}
+          onReorder={
+            isEditMode
+              ? setTempWorkouts
+              : (newWorkouts) => {
+                  if (id) reorderWorkouts(id, newWorkouts);
+                }
+          }
           renderItem={({ item, dragHandleProps }) => {
             const exerciseCount = item.exercises?.length || 0;
             const totalSets = (item.exercises || []).reduce(

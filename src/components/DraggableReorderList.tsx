@@ -100,33 +100,45 @@ export function DraggableReorderList<T extends { id: string }>({
     window.addEventListener('mouseup', onPointerUp, { passive: false });
   };
 
+  const initialIndexRef = useRef<number>(-1);
+  const initialListRef = useRef<T[]>([]);
+
   // --- Native PanResponder Implementation (iOS / Android) ---
   const createNativePanResponder = (index: number, item: T) => {
     return PanResponder.create({
       onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
       onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+      onPanResponderTerminationRequest: () => false,
+      onShouldBlockNativeResponder: () => true,
 
       onPanResponderGrant: () => {
         setDraggingId(item.id);
         draggingIdRef.current = item.id;
+        const currentList = [...itemsRef.current];
+        initialListRef.current = currentList;
+        const initialIdx = currentList.findIndex((it) => it.id === item.id);
+        initialIndexRef.current = initialIdx !== -1 ? initialIdx : index;
       },
 
       onPanResponderMove: (_, gestureState) => {
-        const currentList = itemsRef.current;
-        const fromIndex = currentList.findIndex((it) => it.id === item.id);
-        if (fromIndex === -1) return;
+        const initialIdx = initialIndexRef.current;
+        const baseList = initialListRef.current;
+        if (initialIdx === -1 || baseList.length === 0) return;
 
-        const currentLayout = itemLayoutsRef.current[fromIndex];
-        const approxHeight = currentLayout?.height || 80;
+        const currentLayout = itemLayoutsRef.current[initialIdx];
+        const approxHeight = currentLayout?.height || 75;
         const offsetSlots = Math.round(gestureState.dy / approxHeight);
         const targetIndex = Math.max(
           0,
-          Math.min(currentList.length - 1, fromIndex + offsetSlots)
+          Math.min(baseList.length - 1, initialIdx + offsetSlots)
         );
 
-        if (targetIndex !== fromIndex) {
-          const updated = [...currentList];
-          const [moved] = updated.splice(fromIndex, 1);
+        const currentIdxInItems = itemsRef.current.findIndex((it) => it.id === item.id);
+        if (currentIdxInItems !== targetIndex && targetIndex >= 0 && targetIndex < baseList.length) {
+          const updated = [...baseList];
+          const [moved] = updated.splice(initialIdx, 1);
           updated.splice(targetIndex, 0, moved);
 
           setItems(updated);
@@ -135,14 +147,20 @@ export function DraggableReorderList<T extends { id: string }>({
       },
 
       onPanResponderRelease: () => {
-        onReorder(itemsRef.current);
+        if (draggingIdRef.current) {
+          onReorder(itemsRef.current);
+        }
         setDraggingId(null);
         draggingIdRef.current = null;
+        initialIndexRef.current = -1;
       },
       onPanResponderTerminate: () => {
-        onReorder(itemsRef.current);
+        if (draggingIdRef.current) {
+          onReorder(itemsRef.current);
+        }
         setDraggingId(null);
         draggingIdRef.current = null;
+        initialIndexRef.current = -1;
       },
     });
   };
