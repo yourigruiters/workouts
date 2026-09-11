@@ -105,8 +105,10 @@ export default function SplitsScreen() {
   };
 
   const currentSplits = isEditMode ? tempSplits : splits;
-  const userGreeting =
+  const rawGreeting =
     user?.displayName || user?.email?.split("@")[0] || "Athlete";
+  const userGreeting =
+    rawGreeting.charAt(0).toUpperCase() + rawGreeting.slice(1);
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
