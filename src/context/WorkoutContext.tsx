@@ -10,6 +10,7 @@ import {
 import { storageService } from '../services/storageService';
 import { firebaseService } from '../services/firebaseService';
 import { useAuth } from './AuthContext';
+import { useLoading } from './LoadingContext';
 
 interface WorkoutContextType {
   splits: TrainingSplit[];
@@ -78,6 +79,7 @@ const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
 
 export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const { withLoading, showLoading, hideLoading } = useLoading();
   const [splits, setSplits] = useState<TrainingSplit[]>([]);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -88,6 +90,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const loadData = async () => {
       setIsLoading(true);
+      showLoading('Loading workouts...');
       try {
         if (user && user.uid && firebaseService.isConfigured) {
           // 1. Fetch directly from Cloud Firestore
@@ -124,6 +127,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       } finally {
         if (!isCancelled) {
           setIsLoading(false);
+          hideLoading();
         }
       }
     };
@@ -148,55 +152,61 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const createSplit = async (name: string, description?: string): Promise<TrainingSplit> => {
-    const newSplit: TrainingSplit = {
-      id: 'split-' + Date.now(),
-      name: name.trim() || 'New Training Split',
-      description: description?.trim() || undefined,
-      createdAt: Date.now(),
-    };
-    const updated = [newSplit, ...splits];
-    await saveSplitsState(updated);
+    return withLoading(async () => {
+      const newSplit: TrainingSplit = {
+        id: 'split-' + Date.now(),
+        name: name.trim() || 'New Training Split',
+        description: description?.trim() || undefined,
+        createdAt: Date.now(),
+      };
+      const updated = [newSplit, ...splits];
+      await saveSplitsState(updated);
 
-    if (user && user.uid && firebaseService.isConfigured) {
-      await firebaseService.syncSplitToCloud(user.uid, newSplit, 0);
-      await firebaseService.syncSplitsOrderToCloud(user.uid, updated);
-    }
+      if (user && user.uid && firebaseService.isConfigured) {
+        await firebaseService.syncSplitToCloud(user.uid, newSplit, 0);
+        await firebaseService.syncSplitsOrderToCloud(user.uid, updated);
+      }
 
-    return newSplit;
+      return newSplit;
+    }, 'Creating split...');
   };
 
   const updateSplit = async (id: string, name: string, description?: string) => {
-    let targetSplit: TrainingSplit | null = null;
-    const updated = splits.map((s) => {
-      if (s.id === id) {
-        targetSplit = {
-          ...s,
-          name: name.trim() || s.name,
-          description: description?.trim() || undefined,
-        };
-        return targetSplit;
+    return withLoading(async () => {
+      let targetSplit: TrainingSplit | null = null;
+      const updated = splits.map((s) => {
+        if (s.id === id) {
+          targetSplit = {
+            ...s,
+            name: name.trim() || s.name,
+            description: description?.trim() || undefined,
+          };
+          return targetSplit;
+        }
+        return s;
+      });
+
+      await saveSplitsState(updated);
+
+      if (targetSplit && user && user.uid && firebaseService.isConfigured) {
+        await firebaseService.syncSplitToCloud(user.uid, targetSplit);
       }
-      return s;
-    });
-
-    await saveSplitsState(updated);
-
-    if (targetSplit && user && user.uid && firebaseService.isConfigured) {
-      await firebaseService.syncSplitToCloud(user.uid, targetSplit);
-    }
+    }, 'Saving split...');
   };
 
   const deleteSplit = async (id: string) => {
-    const updatedSplits = splits.filter((s) => s.id !== id);
-    const updatedWorkouts = workouts.filter((w) => w.splitId !== id);
-    await Promise.all([
-      saveSplitsState(updatedSplits),
-      saveWorkoutsState(updatedWorkouts),
-    ]);
+    return withLoading(async () => {
+      const updatedSplits = splits.filter((s) => s.id !== id);
+      const updatedWorkouts = workouts.filter((w) => w.splitId !== id);
+      await Promise.all([
+        saveSplitsState(updatedSplits),
+        saveWorkoutsState(updatedWorkouts),
+      ]);
 
-    if (user && user.uid && firebaseService.isConfigured) {
-      await firebaseService.deleteSplitFromCloud(user.uid, id);
-    }
+      if (user && user.uid && firebaseService.isConfigured) {
+        await firebaseService.deleteSplitFromCloud(user.uid, id);
+      }
+    }, 'Deleting split...');
   };
 
   const createWorkout = async (
@@ -204,64 +214,72 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     name: string,
     focus?: string
   ): Promise<Workout> => {
-    const newWorkout: Workout = {
-      id: 'workout-' + Date.now(),
-      splitId,
-      name: name.trim() || 'New Workout',
-      focus: focus?.trim() || '',
-      createdAt: Date.now(),
-      headings: [],
-      exercises: [],
-    };
-    const updated = [...workouts, newWorkout];
-    await saveWorkoutsState(updated);
+    return withLoading(async () => {
+      const newWorkout: Workout = {
+        id: 'workout-' + Date.now(),
+        splitId,
+        name: name.trim() || 'New Workout',
+        focus: focus?.trim() || '',
+        createdAt: Date.now(),
+        headings: [],
+        exercises: [],
+      };
+      const updated = [...workouts, newWorkout];
+      await saveWorkoutsState(updated);
 
-    if (user && user.uid && firebaseService.isConfigured) {
-      await firebaseService.syncWorkoutToCloud(user.uid, newWorkout, updated.length - 1);
-    }
+      if (user && user.uid && firebaseService.isConfigured) {
+        await firebaseService.syncWorkoutToCloud(user.uid, newWorkout, updated.length - 1);
+      }
 
-    return newWorkout;
+      return newWorkout;
+    }, 'Creating workout...');
   };
 
   const updateWorkoutDetails = async (id: string, name: string, focus?: string) => {
-    let targetWorkout: Workout | null = null;
-    const updated = workouts.map((w) => {
-      if (w.id === id) {
-        targetWorkout = {
-          ...w,
-          name: name.trim() || w.name,
-          focus: focus !== undefined ? focus.trim() : w.focus,
-        };
-        return targetWorkout;
+    return withLoading(async () => {
+      let targetWorkout: Workout | null = null;
+      const updated = workouts.map((w) => {
+        if (w.id === id) {
+          targetWorkout = {
+            ...w,
+            name: name.trim() || w.name,
+            focus: focus !== undefined ? focus.trim() : w.focus,
+          };
+          return targetWorkout;
+        }
+        return w;
+      });
+
+      await saveWorkoutsState(updated);
+
+      if (targetWorkout && user && user.uid && firebaseService.isConfigured) {
+        await firebaseService.syncWorkoutToCloud(user.uid, targetWorkout);
       }
-      return w;
-    });
-
-    await saveWorkoutsState(updated);
-
-    if (targetWorkout && user && user.uid && firebaseService.isConfigured) {
-      await firebaseService.syncWorkoutToCloud(user.uid, targetWorkout);
-    }
+    }, 'Saving workout...');
   };
 
   const deleteWorkout = async (id: string) => {
-    const updated = workouts.filter((w) => w.id !== id);
-    await saveWorkoutsState(updated);
+    return withLoading(async () => {
+      const updated = workouts.filter((w) => w.id !== id);
+      await saveWorkoutsState(updated);
 
-    if (user && user.uid && firebaseService.isConfigured) {
-      await firebaseService.deleteWorkoutFromCloud(user.uid, id);
-    }
+      if (user && user.uid && firebaseService.isConfigured) {
+        await firebaseService.deleteWorkoutFromCloud(user.uid, id);
+      }
+    }, 'Deleting workout...');
   };
 
   const updateWorkout = async (updatedWorkout: Workout) => {
-    const updated = workouts.map((w) =>
-      w.id === updatedWorkout.id ? updatedWorkout : w
-    );
-    await saveWorkoutsState(updated);
+    return withLoading(async () => {
+      const updated = workouts.map((w) =>
+        w.id === updatedWorkout.id ? updatedWorkout : w
+      );
+      await saveWorkoutsState(updated);
 
-    if (user && user.uid && firebaseService.isConfigured) {
-      await firebaseService.syncWorkoutToCloud(user.uid, updatedWorkout);
-    }
+      if (user && user.uid && firebaseService.isConfigured) {
+        await firebaseService.syncWorkoutToCloud(user.uid, updatedWorkout);
+      }
+    }, 'Saving changes...');
   };
 
   const getSplitById = (id: string) => splits.find((s) => s.id === id);
@@ -287,19 +305,21 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     title: string,
     color: SectionHeading['color']
   ): Promise<SectionHeading> => {
-    const workout = getWorkoutById(workoutId);
-    if (!workout) throw new Error('Workout not found');
+    return withLoading(async () => {
+      const workout = getWorkoutById(workoutId);
+      if (!workout) throw new Error('Workout not found');
 
-    const newHeading: SectionHeading = {
-      id: 'heading-' + Date.now(),
-      title: title.trim() || 'Group',
-      color: color || 'blue',
-      isCollapsed: false,
-    };
+      const newHeading: SectionHeading = {
+        id: 'heading-' + Date.now(),
+        title: title.trim() || 'Group',
+        color: color || 'blue',
+        isCollapsed: false,
+      };
 
-    const updatedHeadings = [...workout.headings, newHeading];
-    await updateWorkout({ ...workout, headings: updatedHeadings });
-    return newHeading;
+      const updatedHeadings = [...workout.headings, newHeading];
+      await updateWorkout({ ...workout, headings: updatedHeadings });
+      return newHeading;
+    }, 'Adding group...');
   };
 
   const updateHeading = async (
@@ -308,66 +328,76 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     title: string,
     color: SectionHeading['color']
   ) => {
-    const workout = getWorkoutById(workoutId);
-    if (!workout) return;
+    return withLoading(async () => {
+      const workout = getWorkoutById(workoutId);
+      if (!workout) return;
 
-    const updatedHeadings = workout.headings.map((h) =>
-      h.id === headingId
-        ? { ...h, title: title.trim() || h.title, color: color || h.color }
-        : h
-    );
+      const updatedHeadings = workout.headings.map((h) =>
+        h.id === headingId
+          ? { ...h, title: title.trim() || h.title, color: color || h.color }
+          : h
+      );
 
-    await updateWorkout({ ...workout, headings: updatedHeadings });
+      await updateWorkout({ ...workout, headings: updatedHeadings });
+    }, 'Saving group...');
   };
 
   const deleteHeading = async (workoutId: string, headingId: string) => {
-    const workout = getWorkoutById(workoutId);
-    if (!workout) return;
+    return withLoading(async () => {
+      const workout = getWorkoutById(workoutId);
+      if (!workout) return;
 
-    const updatedHeadings = workout.headings.filter((h) => h.id !== headingId);
-    const updatedExercises = workout.exercises.filter((ex) => ex.headingId !== headingId);
+      const updatedHeadings = workout.headings.filter((h) => h.id !== headingId);
+      const updatedExercises = workout.exercises.filter((ex) => ex.headingId !== headingId);
 
-    await updateWorkout({
-      ...workout,
-      headings: updatedHeadings,
-      exercises: updatedExercises,
-    });
+      await updateWorkout({
+        ...workout,
+        headings: updatedHeadings,
+        exercises: updatedExercises,
+      });
+    }, 'Deleting group...');
   };
 
   const addExercise = async (
     workoutId: string,
     exerciseData: Omit<ExerciseItem, 'id'>
   ): Promise<ExerciseItem> => {
-    const workout = getWorkoutById(workoutId);
-    if (!workout) throw new Error('Workout not found');
+    return withLoading(async () => {
+      const workout = getWorkoutById(workoutId);
+      if (!workout) throw new Error('Workout not found');
 
-    const newExercise: ExerciseItem = {
-      ...exerciseData,
-      id: 'ex-' + Date.now(),
-      sets: exerciseData.sets || [],
-    };
+      const newExercise: ExerciseItem = {
+        ...exerciseData,
+        id: 'ex-' + Date.now(),
+        sets: exerciseData.sets || [],
+      };
 
-    const updatedExercises = [...workout.exercises, newExercise];
-    await updateWorkout({ ...workout, exercises: updatedExercises });
-    return newExercise;
+      const updatedExercises = [...workout.exercises, newExercise];
+      await updateWorkout({ ...workout, exercises: updatedExercises });
+      return newExercise;
+    }, 'Adding exercise...');
   };
 
   const updateExercise = async (workoutId: string, exercise: ExerciseItem) => {
-    const workout = getWorkoutById(workoutId);
-    if (!workout) return;
+    return withLoading(async () => {
+      const workout = getWorkoutById(workoutId);
+      if (!workout) return;
 
-    const updatedExercises = workout.exercises.map((ex) =>
-      ex.id === exercise.id ? exercise : ex
-    );
-    await updateWorkout({ ...workout, exercises: updatedExercises });
+      const updatedExercises = workout.exercises.map((ex) =>
+        ex.id === exercise.id ? exercise : ex
+      );
+      await updateWorkout({ ...workout, exercises: updatedExercises });
+    }, 'Saving exercise...');
   };
 
   const deleteExercise = async (workoutId: string, exerciseId: string) => {
-    const workout = getWorkoutById(workoutId);
-    if (!workout) return;
+    return withLoading(async () => {
+      const workout = getWorkoutById(workoutId);
+      if (!workout) return;
 
-    const updatedExercises = workout.exercises.filter((ex) => ex.id !== exerciseId);
-    await updateWorkout({ ...workout, exercises: updatedExercises });
+      const updatedExercises = workout.exercises.filter((ex) => ex.id !== exerciseId);
+      await updateWorkout({ ...workout, exercises: updatedExercises });
+    }, 'Deleting exercise...');
   };
 
   const addSet = async (
@@ -375,34 +405,35 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     exerciseId: string,
     setData: Omit<SetItem, 'id'>
   ): Promise<SetItem> => {
-    const workout = getWorkoutById(workoutId);
-    if (!workout) throw new Error('Workout not found');
+    return withLoading(async () => {
+      const workout = getWorkoutById(workoutId);
+      if (!workout) throw new Error('Workout not found');
 
-    const newSet: SetItem = {
-      ...setData,
-      id: 's-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
-    };
+      const newSet: SetItem = {
+        ...setData,
+        id: 's-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+      };
 
-    const updatedExercises = workout.exercises.map((ex) => {
-      if (ex.id === exerciseId) {
-        if (newSet.type === 'warmup') {
-          // Warmup sets when added should always be placed after existing warmups
-          const lastWarmupIndex = ex.sets.reduce(
-            (lastIdx, s, idx) => (s.type === 'warmup' ? idx : lastIdx),
-            -1
-          );
-          const newSets = [...ex.sets];
-          newSets.splice(lastWarmupIndex + 1, 0, newSet);
-          return { ...ex, sets: newSets };
-        } else {
-          return { ...ex, sets: [...ex.sets, newSet] };
+      const updatedExercises = workout.exercises.map((ex) => {
+        if (ex.id === exerciseId) {
+          if (newSet.type === 'warmup') {
+            const lastWarmupIndex = ex.sets.reduce(
+              (lastIdx, s, idx) => (s.type === 'warmup' ? idx : lastIdx),
+              -1
+            );
+            const newSets = [...ex.sets];
+            newSets.splice(lastWarmupIndex + 1, 0, newSet);
+            return { ...ex, sets: newSets };
+          } else {
+            return { ...ex, sets: [...ex.sets, newSet] };
+          }
         }
-      }
-      return ex;
-    });
+        return ex;
+      });
 
-    await updateWorkout({ ...workout, exercises: updatedExercises });
-    return newSet;
+      await updateWorkout({ ...workout, exercises: updatedExercises });
+      return newSet;
+    }, 'Adding set...');
   };
 
   const toggleSetCompleted = async (
@@ -458,23 +489,25 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     exerciseId: string,
     updatedSet: SetItem
   ) => {
-    const workout = getWorkoutById(workoutId);
-    if (!workout) return;
+    return withLoading(async () => {
+      const workout = getWorkoutById(workoutId);
+      if (!workout) return;
 
-    const updatedExercises = workout.exercises.map((ex) => {
-      if (ex.id === exerciseId) {
-        const rawUpdated = ex.sets.map((s) => (s.id === updatedSet.id ? updatedSet : s));
-        const warmups = rawUpdated.filter((s) => s.type === 'warmup');
-        const actives = rawUpdated.filter((s) => s.type !== 'warmup');
-        return {
-          ...ex,
-          sets: [...warmups, ...actives],
-        };
-      }
-      return ex;
-    });
+      const updatedExercises = workout.exercises.map((ex) => {
+        if (ex.id === exerciseId) {
+          const rawUpdated = ex.sets.map((s) => (s.id === updatedSet.id ? updatedSet : s));
+          const warmups = rawUpdated.filter((s) => s.type === 'warmup');
+          const actives = rawUpdated.filter((s) => s.type !== 'warmup');
+          return {
+            ...ex,
+            sets: [...warmups, ...actives],
+          };
+        }
+        return ex;
+      });
 
-    await updateWorkout({ ...workout, exercises: updatedExercises });
+      await updateWorkout({ ...workout, exercises: updatedExercises });
+    }, 'Saving set...');
   };
 
   const deleteSet = async (
@@ -482,49 +515,50 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     exerciseId: string,
     setId: string
   ) => {
-    const workout = getWorkoutById(workoutId);
-    if (!workout) return;
+    return withLoading(async () => {
+      const workout = getWorkoutById(workoutId);
+      if (!workout) return;
 
-    const updatedExercises = workout.exercises.map((ex) => {
-      if (ex.id === exerciseId) {
-        return {
-          ...ex,
-          sets: ex.sets.filter((s) => s.id !== setId),
-        };
-      }
-      return ex;
-    });
+      const updatedExercises = workout.exercises.map((ex) => {
+        if (ex.id === exerciseId) {
+          return {
+            ...ex,
+            sets: ex.sets.filter((s) => s.id !== setId),
+          };
+        }
+        return ex;
+      });
 
-    await updateWorkout({ ...workout, exercises: updatedExercises });
+      await updateWorkout({ ...workout, exercises: updatedExercises });
+    }, 'Deleting set...');
   };
 
   const reorderSplits = async (newSplits: TrainingSplit[]) => {
-    await saveSplitsState(newSplits);
-    if (user && user.uid && firebaseService.isConfigured) {
-      await firebaseService.syncSplitsOrderToCloud(user.uid, newSplits);
-    }
+    return withLoading(async () => {
+      await saveSplitsState(newSplits);
+      if (user && user.uid && firebaseService.isConfigured) {
+        await firebaseService.syncSplitsOrderToCloud(user.uid, newSplits);
+      }
+    }, 'Saving order...');
   };
 
   const reorderWorkouts = async (splitId: string, orderedSplitWorkouts: Workout[]) => {
-    let splitIndex = 0;
-    const updated = workouts.map((w) => {
-      if (w.splitId === splitId) {
-        const next = orderedSplitWorkouts[splitIndex];
-        splitIndex++;
-        return next || w;
+    return withLoading(async () => {
+      const otherWorkouts = workouts.filter((w) => w.splitId !== splitId);
+      const updated = [...otherWorkouts, ...orderedSplitWorkouts];
+      await saveWorkoutsState(updated);
+      if (user && user.uid && firebaseService.isConfigured) {
+        await firebaseService.syncWorkoutsOrderToCloud(user.uid, updated);
       }
-      return w;
-    });
-    await saveWorkoutsState(updated);
-    if (user && user.uid && firebaseService.isConfigured) {
-      await firebaseService.syncWorkoutsOrderToCloud(user.uid, updated);
-    }
+    }, 'Saving order...');
   };
 
   const reorderExercises = async (workoutId: string, orderedExercises: ExerciseItem[]) => {
-    const workout = getWorkoutById(workoutId);
-    if (!workout) return;
-    await updateWorkout({ ...workout, exercises: orderedExercises });
+    return withLoading(async () => {
+      const workout = getWorkoutById(workoutId);
+      if (!workout) return;
+      await updateWorkout({ ...workout, exercises: orderedExercises });
+    }, 'Saving order...');
   };
 
   return (

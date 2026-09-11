@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { UserProfile } from '../types/user';
 import { firebaseService } from '../services/firebaseService';
+import { useLoading } from './LoadingContext';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -14,6 +15,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { withLoading } = useLoading();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -39,41 +41,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const loginWithEmail = async (email: string, pass: string) => {
-    setIsLoading(true);
-    try {
-      const fbUser = await firebaseService.login(email, pass);
-      if (fbUser) {
-        const profile = await firebaseService.getUserProfile(fbUser.uid);
-        setUser({
-          uid: fbUser.uid,
-          email: fbUser.email || email,
-          displayName: profile?.displayName || fbUser.displayName || email.split('@')[0],
-        });
+    return withLoading(async () => {
+      setIsLoading(true);
+      try {
+        const fbUser = await firebaseService.login(email, pass);
+        if (fbUser) {
+          const profile = await firebaseService.getUserProfile(fbUser.uid);
+          setUser({
+            uid: fbUser.uid,
+            email: fbUser.email || email,
+            displayName: profile?.displayName || fbUser.displayName || email.split('@')[0],
+          });
+        }
+      } finally {
+        setIsLoading(false);
       }
-    } finally {
-      setIsLoading(false);
-    }
+    }, 'Signing in...');
   };
 
   const registerWithEmail = async (email: string, pass: string, displayName?: string) => {
-    setIsLoading(true);
-    try {
-      const fbUser = await firebaseService.register(email, pass, displayName);
-      if (fbUser) {
-        setUser({
-          uid: fbUser.uid,
-          email: fbUser.email || email,
-          displayName: displayName?.trim() || fbUser.displayName || email.split('@')[0],
-        });
+    return withLoading(async () => {
+      setIsLoading(true);
+      try {
+        const fbUser = await firebaseService.register(email, pass, displayName);
+        if (fbUser) {
+          setUser({
+            uid: fbUser.uid,
+            email: fbUser.email || email,
+            displayName: displayName?.trim() || fbUser.displayName || email.split('@')[0],
+          });
+        }
+      } finally {
+        setIsLoading(false);
       }
-    } finally {
-      setIsLoading(false);
-    }
+    }, 'Creating account...');
   };
 
   const logout = async () => {
-    await firebaseService.logout();
-    setUser(null);
+    return withLoading(async () => {
+      await firebaseService.logout();
+      setUser(null);
+    }, 'Logging out...');
   };
 
   return (

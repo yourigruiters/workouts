@@ -39,12 +39,8 @@ export default function WorkoutDetailScreen() {
 
   // Edit Mode State
   const [isEditMode, setIsEditMode] = useState(false);
-  const [tempExercises, setTempExercises] = useState<ExerciseItem[]>(
-    workout?.exercises || [],
-  );
-  const [tempHeadings, setTempHeadings] = useState<SectionHeading[]>(
-    workout?.headings || [],
-  );
+  const [tempExercises, setTempExercises] = useState<ExerciseItem[]>([]);
+  const [tempHeadings, setTempHeadings] = useState<SectionHeading[]>([]);
 
   // Group Collapsed / Expanded State (Always starts completely closed)
   const [expandedHeadingIds, setExpandedHeadingIds] = useState<

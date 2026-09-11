@@ -40,7 +40,7 @@ export default function SplitsScreen() {
   const { user, logout } = useAuth();
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [tempSplits, setTempSplits] = useState<TrainingSplit[]>(splits);
+  const [tempSplits, setTempSplits] = useState<TrainingSplit[]>([]);
   const [editTargetSplit, setEditTargetSplit] = useState<TrainingSplit | null>(
     null,
   );
@@ -58,26 +58,16 @@ export default function SplitsScreen() {
   };
 
   const handleSaveEdit = async () => {
-    const removedSplits = splits.filter(
-      (s) => !tempSplits.some((ts) => ts.id === s.id),
-    );
-    for (const r of removedSplits) {
-      await deleteSplit(r.id);
-    }
     await reorderSplits(tempSplits);
     setIsEditMode(false);
   };
 
-  const handleConfirmDeleteSplit = () => {
+  const handleConfirmDeleteSplit = async () => {
     if (!deleteTargetSplit) return;
-    if (isEditMode) {
-      setTempSplits((prev) =>
-        prev.filter((s) => s.id !== deleteTargetSplit.id),
-      );
-    } else {
-      deleteSplit(deleteTargetSplit.id);
-    }
+    const targetId = deleteTargetSplit.id;
     setDeleteTargetSplit(null);
+    setTempSplits((prev) => prev.filter((s) => s.id !== targetId));
+    await deleteSplit(targetId);
   };
 
   const handleMoveSplit = (fromIndex: number, toIndex: number) => {

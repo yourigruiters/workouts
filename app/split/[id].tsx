@@ -43,7 +43,7 @@ export default function SplitDetailScreen() {
 
   const split = getSplitById(id || '');
   const workouts = getWorkoutsForSplit(id || '');
-  const [tempWorkouts, setTempWorkouts] = useState<Workout[]>(workouts);
+  const [tempWorkouts, setTempWorkouts] = useState<Workout[]>([]);
 
   const handleStartEdit = () => {
     setTempWorkouts(workouts);
@@ -57,27 +57,17 @@ export default function SplitDetailScreen() {
 
   const handleSaveEdit = async () => {
     if (id) {
-      const removedWorkouts = workouts.filter(
-        (w) => !tempWorkouts.some((tw) => tw.id === w.id),
-      );
-      for (const r of removedWorkouts) {
-        await deleteWorkout(r.id);
-      }
       await reorderWorkouts(id, tempWorkouts);
     }
     setIsEditMode(false);
   };
 
-  const handleConfirmDeleteWorkout = () => {
+  const handleConfirmDeleteWorkout = async () => {
     if (!deleteTargetWorkout) return;
-    if (isEditMode) {
-      setTempWorkouts((prev) =>
-        prev.filter((w) => w.id !== deleteTargetWorkout.id),
-      );
-    } else {
-      deleteWorkout(deleteTargetWorkout.id);
-    }
+    const targetId = deleteTargetWorkout.id;
     setDeleteTargetWorkout(null);
+    setTempWorkouts((prev) => prev.filter((w) => w.id !== targetId));
+    await deleteWorkout(targetId);
   };
 
   const handleMoveWorkout = (fromIndex: number, toIndex: number) => {
